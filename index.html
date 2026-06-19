@@ -1,0 +1,1396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Critical Findings Directory</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script>Babel.registerPreset('react-classic', { presets: [[Babel.availablePresets['react'], {runtime:'classic'}]] });</script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --tab-height: 66px;
+    }
+    html, body { height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+      background: #f2f2f7;
+      color: #1c1c1e;
+      -webkit-text-size-adjust: 100%;
+      overscroll-behavior: none;
+    }
+    #root {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      position: relative;
+      background: #f2f2f7;
+    }
+
+    /* Header */
+    .app-header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(255,255,255,0.97);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid #e5e5ea;
+      padding-top: var(--safe-top);
+    }
+    .header-top {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px 8px;
+    }
+    .header-title { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .header-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 40px; height: 28px; border-radius: 8px;
+      font-size: 11px; font-weight: 800; color: white;
+      padding: 0 7px; flex-shrink: 0; letter-spacing: 0.4px;
+    }
+    .header-title-text {
+      font-size: 15px; font-weight: 600; color: #1c1c1e;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .header-actions { display: flex; gap: 6px; }
+    .icon-btn {
+      display: flex; align-items: center; justify-content: center;
+      width: 34px; height: 34px; border: none; background: #f2f2f7;
+      border-radius: 10px; cursor: pointer; font-size: 15px; color: #3a3a3c;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .icon-btn:active { background: #d1d1d6; }
+
+    /* Search */
+    .search-wrap { padding: 0 14px 8px; }
+    .search-inner {
+      display: flex; align-items: center; gap: 7px;
+      background: #f2f2f7; border-radius: 11px; padding: 8px 11px;
+    }
+    .search-inner svg { flex-shrink: 0; color: #8e8e93; }
+    .search-input {
+      flex: 1; border: none; background: transparent;
+      font-size: 15px; color: #1c1c1e; outline: none;
+    }
+    .search-input::placeholder { color: #8e8e93; }
+    .search-clear {
+      background: #aeaeb2; border: none; border-radius: 50%;
+      width: 17px; height: 17px; display: flex; align-items: center;
+      justify-content: center; cursor: pointer; color: white;
+      font-size: 10px; flex-shrink: 0;
+    }
+
+    /* Segment */
+    .segment-row { padding: 0 14px 10px; }
+    .segment-control {
+      display: flex; background: #e5e5ea; border-radius: 9px; padding: 2px; gap: 2px;
+    }
+    .seg-btn {
+      flex: 1; border: none; background: transparent; border-radius: 7px;
+      padding: 7px 4px; font-size: 13px; font-weight: 500; color: #3a3a3c;
+      cursor: pointer; transition: all 0.18s; -webkit-tap-highlight-color: transparent;
+    }
+    .seg-btn.active {
+      background: white; font-weight: 700;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.13); color: #1c1c1e;
+    }
+
+    /* Content */
+    .content {
+      flex: 1; overflow-y: auto;
+      padding: 12px 14px;
+      padding-bottom: calc(var(--tab-height) + var(--safe-bottom) + 12px);
+      -webkit-overflow-scrolling: touch;
+    }
+    .content::-webkit-scrollbar { display: none; }
+    .content { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* Cards */
+    .card {
+      background: white; border-radius: 14px; overflow: hidden;
+      margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px; border-bottom: 1px solid #f2f2f7;
+    }
+    .card-title {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.7px; color: #6d6d72;
+    }
+    .card-actions { display: flex; gap: 5px; }
+    .chip-btn {
+      border: none; background: #f2f2f7; border-radius: 7px;
+      padding: 4px 9px; font-size: 12px; font-weight: 600; color: #007AFF;
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
+    }
+    .chip-btn:active { background: #e5e5ea; }
+    .chip-btn.red { color: #FF3B30; }
+
+    /* Entry Row */
+    .entry-row { border-bottom: 1px solid #f2f2f7; }
+    .entry-row:last-child { border-bottom: none; }
+    .entry-main {
+      display: flex; align-items: center; padding: 11px 14px;
+      gap: 10px; cursor: pointer; -webkit-tap-highlight-color: transparent; min-height: 54px;
+    }
+    .entry-main:active { background: #f9f9fb; }
+    .entry-label { flex: 1; font-size: 15px; font-weight: 500; color: #1c1c1e; min-width: 0; }
+    .entry-sub { font-size: 12px; color: #8e8e93; margin-top: 2px; line-height: 1.3; }
+    .entry-actions { display: flex; border-top: 1px solid #f2f2f7; }
+    .act-btn {
+      flex: 1; border: none; background: transparent; padding: 10px 4px;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 4px;
+      -webkit-tap-highlight-color: transparent;
+      border-right: 1px solid #f2f2f7;
+    }
+    .act-btn:last-child { border-right: none; }
+    .act-btn:active { background: #f2f2f7; }
+    .act-btn.copy { color: #34C759; }
+    .act-btn.edit { color: #007AFF; }
+    .act-btn.del  { color: #FF3B30; }
+
+    /* PhoneLink */
+    .phone-link {
+      display: inline-flex; align-items: center; gap: 5px;
+      color: #007AFF; font-size: 13px; font-weight: 600;
+      text-decoration: none; background: #eef5ff;
+      padding: 5px 10px; border-radius: 8px; white-space: nowrap;
+      -webkit-tap-highlight-color: transparent;
+      max-width: 185px; overflow: hidden; text-overflow: ellipsis;
+    }
+    .phone-link:active { background: #dceeff; }
+    .phone-icon { flex-shrink: 0; font-size: 12px; }
+
+    /* Tab Bar */
+    .tab-bar {
+      position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 100%; max-width: 480px;
+      height: calc(var(--tab-height) + var(--safe-bottom));
+      background: rgba(249,249,249,0.96);
+      backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+      border-top: 1px solid #d1d1d6;
+      display: flex; align-items: flex-start;
+      padding-top: 6px; padding-bottom: var(--safe-bottom); z-index: 100;
+    }
+    .tab-item {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; gap: 3px; border: none; background: transparent;
+      cursor: pointer; padding: 0 4px; -webkit-tap-highlight-color: transparent;
+    }
+    .tab-icon {
+      width: 44px; height: 26px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 800; color: white; letter-spacing: 0.3px;
+      transition: transform 0.15s, opacity 0.15s; opacity: 0.38;
+    }
+    .tab-item.active .tab-icon { opacity: 1; transform: scale(1.06); }
+    .tab-label { font-size: 10px; font-weight: 500; color: #8e8e93; }
+    .tab-item.active .tab-label { color: #1c1c1e; font-weight: 700; }
+
+    /* Modal Sheet */
+    .overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.38); z-index: 200;
+      display: flex; align-items: flex-end; justify-content: center;
+    }
+    .sheet {
+      background: white; border-radius: 20px 20px 0 0;
+      width: 100%; max-width: 480px; max-height: 92vh; overflow-y: auto;
+      padding-bottom: calc(var(--safe-bottom) + 16px);
+      animation: up 0.22s ease;
+    }
+    .sheet::-webkit-scrollbar { display: none; }
+    @keyframes up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .sheet-handle { width: 36px; height: 4px; background: #e0e0e5; border-radius: 2px; margin: 12px auto 6px; }
+    .sheet-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 4px 16px 12px; border-bottom: 1px solid #f2f2f7;
+    }
+    .sheet-title { font-size: 17px; font-weight: 700; color: #1c1c1e; }
+    .sheet-close {
+      border: none; background: #f2f2f7; border-radius: 50%;
+      width: 28px; height: 28px; display: flex; align-items: center;
+      justify-content: center; cursor: pointer; font-size: 13px; color: #636366;
+    }
+    .sheet-body { padding: 16px; }
+
+    /* Form */
+    .fg { margin-bottom: 14px; }
+    .fl {
+      display: block; font-size: 12px; font-weight: 600; color: #6d6d72;
+      text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 6px;
+    }
+    .fi {
+      width: 100%; border: 1.5px solid #e5e5ea; border-radius: 10px;
+      padding: 10px 12px; font-size: 15px; color: #1c1c1e; outline: none;
+      background: white; font-family: inherit;
+    }
+    .fi:focus { border-color: #007AFF; }
+    .fhint { font-size: 12px; color: #8e8e93; margin-top: 5px; line-height: 1.45; }
+    .fhint strong { color: #555; }
+    .btn-save {
+      width: 100%; border: none; background: #007AFF; color: white;
+      border-radius: 12px; padding: 14px; font-size: 16px; font-weight: 700;
+      cursor: pointer; margin-top: 6px; -webkit-tap-highlight-color: transparent;
+      font-family: inherit;
+    }
+    .btn-save:active { background: #0062cc; }
+    .btn-save:disabled { opacity: 0.45; }
+    .btn-del {
+      width: 100%; border: none; background: #fff2f2; color: #FF3B30;
+      border-radius: 12px; padding: 14px; font-size: 16px; font-weight: 700;
+      cursor: pointer; margin-top: 8px; -webkit-tap-highlight-color: transparent;
+      font-family: inherit;
+    }
+    .btn-del:active { background: #ffe4e3; }
+
+    /* Color swatches */
+    .swatches { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+    .swatch { width: 34px; height: 34px; border-radius: 50%; cursor: pointer; border: 3px solid transparent; transition: transform 0.12s; }
+    .swatch.sel { border-color: white; box-shadow: 0 0 0 3px var(--c); transform: scale(1.12); }
+
+    /* Empty state */
+    .empty { text-align: center; padding: 44px 20px; }
+    .empty-icon { font-size: 44px; margin-bottom: 10px; }
+    .empty-title { font-size: 17px; font-weight: 700; color: #3a3a3c; margin-bottom: 5px; }
+    .empty-desc { font-size: 14px; color: #8e8e93; line-height: 1.5; }
+
+    /* Add-card */
+    .add-card {
+      background: white; border-radius: 14px; border: 2px dashed #d1d1d6;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 18px; margin-bottom: 14px; cursor: pointer;
+      color: #007AFF; font-size: 15px; font-weight: 600;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .add-card:active { background: #f9f9fb; }
+
+    /* Clinician row */
+    .clin-row {
+      display: flex; align-items: center; padding: 11px 14px; gap: 11px;
+      border-bottom: 1px solid #f2f2f7; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .clin-row:last-child { border-bottom: none; }
+    .clin-row:active { background: #f9f9fb; }
+    .avatar {
+      width: 38px; height: 38px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700; flex-shrink: 0;
+    }
+    .clin-info { flex: 1; min-width: 0; }
+    .clin-name { font-size: 15px; font-weight: 500; color: #1c1c1e; }
+    .clin-role { font-size: 12px; color: #8e8e93; margin-top: 1px; }
+
+    /* Search results */
+    .sr-header {
+      font-size: 12px; font-weight: 700; color: #8e8e93;
+      text-transform: uppercase; letter-spacing: 0.5px; padding: 0 2px 8px;
+    }
+    .hosp-pill {
+      display: inline-block; border-radius: 5px; font-size: 10px;
+      font-weight: 800; padding: 1px 5px; color: white; margin-right: 4px; vertical-align: middle;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: calc(var(--tab-height) + var(--safe-bottom) + 14px);
+      left: 50%; transform: translateX(-50%);
+      background: rgba(30,30,30,0.88); color: white;
+      padding: 10px 20px; border-radius: 20px;
+      font-size: 14px; font-weight: 600; z-index: 300;
+      white-space: nowrap; pointer-events: none;
+      animation: tin 0.18s ease, tout 0.28s ease 1.7s forwards;
+    }
+    @keyframes tin  { from { opacity:0; transform:translateX(-50%) translateY(6px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
+    @keyframes tout { to   { opacity:0; transform:translateX(-50%) translateY(6px); } }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+/* Pre-defined data — outside Babel to avoid parse overhead */
+const RCH_CLINICIANS = [{"role":"Internal Medicine - Nephrology","display":"(909)202-0252","name":"Amir Abdi Pour, MD","dialString":"9092020252","id":"rch0"},{"name":"Alireza Abidi, MD","role":"Obstetrics & Gynecology - Gynecologic Oncology","display":"(951)809-4908","dialString":"9518094908","id":"rch1"},{"role":"APP - Certified Nurse Anesthetist","display":"(732)216-8246","name":"Alyssa Aboff, CRNA","id":"rch2","dialString":"7322168246"},{"display":"(951)987-2736","role":"Internal Medicine - Interventional Cardiology","name":"Georges Abou Rjaili, MD","id":"rch3","dialString":"9519872736"},{"display":"(714)342-1240","role":"Podiatry","name":"Rahul Abraham, DPM","dialString":"7143421240","id":"rch4"},{"id":"rch5","dialString":"9733301940","name":"Firas Abubaker, MD","role":"Internal Medicine - Infectious Disease","display":"(973)330-1940"},{"dialString":"7608059676","id":"rch6","role":"Obstetrics & Gynecology","display":"(760)805-9676","name":"Sara Abu-Tabikh, MD"},{"display":"(858)348-7683","role":"Internal Medicine - Pulmonary Disease","name":"Faraz Afridi, MD","id":"rch7","dialString":"8583487683"},{"name":"Ardavan Afshar, MD","display":"(310)435-2424","role":"Radiology - Diagnostic","id":"rch8","dialString":"3104352424"},{"name":"Edilberto Agas, MD","role":"Pediatrics","display":"(718)578-0659","id":"rch9","dialString":"7185780659"},{"dialString":"9518808959","id":"rch10","name":"Jacqueline Agcaoili, MD","role":"Internal Medicine","display":"(951)880-8959"},{"role":"Preventive Medicine - Public Health & General Preventive Med","display":"(909)754-6434","name":"Wollelaw Agmas, MD","dialString":"9097546434","id":"rch11"},{"id":"rch12","dialString":"9095185985","display":"(909)518-5985","role":"Podiatry","name":"Ivan Aguilera, DPM"},{"id":"rch13","dialString":"9095090002","name":"Cesar Aguiluz, DO","role":"Plastic Surgery","display":"(909)509-0002"},{"display":"(951)202-1356","role":"APP - Nurse Practitioner","name":"Diana Aguirre, NP","dialString":"9512021356","id":"rch14"},{"id":"rch15","dialString":"9518501653","role":"Surgery","display":"(951)850-1653","name":"Bakhtiar Ahmad, MD"},{"dialString":"9173253758","id":"rch16","role":"Neurological Surgery","display":"(917)325-3758","name":"Maleeha Ahmad, MD"},{"display":"(681)945-5476","role":"Internal Medicine - Critical Care Medicine","name":"Masood Ahmad, MD","id":"rch17","dialString":"6819455476"},{"name":"Irfan Ahmad, MD","role":"Pediatrics - Neonatal-Perinatal Medicine","display":"(714)414-9307","id":"rch18","dialString":"7144149307"},{"id":"rch19","dialString":"7025466979","name":"Brian Ahuja, MD","role":"Neurology","display":"(702)546-6979"},{"id":"rch20","dialString":"4155710663","role":"Internal Medicine","display":"(415)571-0663","name":"Maria Akamnonu, MD"},{"display":"(323)422-9624","role":"Internal Medicine - Endocrinology, Diabetes & Metabolism","name":"Chukwuka Akamnonu, MD","id":"rch21","dialString":"3234229624"},{"role":"Anesthesiology - Critical Care Medicine","display":"(804)306-9494","name":"Ramin Akhavan, MD","id":"rch22","dialString":"8043069494"},{"name":"Akpobo Akporotu, MD","role":"Internal Medicine - Nephrology","display":"(732)801-1093","dialString":"7328011093","id":"rch23"},{"id":"rch24","dialString":"4237372281","display":"(423)737-2281","role":"Internal Medicine - Pulmonary Disease","name":"Ahmad Alazzeh, MD"},{"name":"Sarmad Al-Bahrani, MD","display":"(510)509-4231","role":"Internal Medicine","id":"rch25","dialString":"5105094231"},{"dialString":"5732255767","id":"rch26","name":"Mohamad Albouidani, MD","display":"(573)225-5767","role":"Internal Medicine"},{"display":"(951)966-6646","role":"Obstetrics & Gynecology","name":"Eugene Albright, MD","id":"rch27","dialString":"9519666646"},{"dialString":"7142133042","id":"rch28","role":"APP - Physician Assistant","display":"(714)213-3042","name":"Judy Alfonso, PA"},{"dialString":"7036225195","id":"rch29","name":"Tameem Alhayya, MD","display":"(703)622-5195","role":"Internal Medicine - Nephrology"},{"name":"Komail-Mujtaba Ali, MD","display":"(331)980-9008","role":"Internal Medicine","id":"rch30","dialString":"3319809008"},{"name":"Mohsen Aljayeh, MD","display":"(202)997-9606","role":"Internal Medicine - Infectious Disease","id":"rch31","dialString":"2029979606"},{"dialString":"7142994177","id":"rch32","role":"Pediatrics","display":"(714)299-4177","name":"Naheed Aljilani, MD"},{"name":"Mohammed Al-Khayyat, MD","display":"(619)456-5230","role":"Internal Medicine","id":"rch33","dialString":"6194565230"},{"name":"Lama Al-Khoury, MD","display":"(619)459-6883","role":"Neurology","dialString":"6194596883","id":"rch34"},{"display":"(386)405-1710","role":"Radiology - Diagnostic","name":"Amanda Allen, DO","id":"rch35","dialString":"3864051710"},{"name":"Husam Alsamman, MD","display":"(216)280-4795","role":"Anesthesiology","id":"rch36","dialString":"2162804795"},{"dialString":"8053001994","id":"rch37","role":"APP - Certified Nurse Anesthetist","display":"(805)300-1994","name":"Jeffrey Altizer, CRNA"},{"dialString":"9493553327","id":"rch38","name":"Ahmad Alturjuman, MD","display":"(949)355-3327","role":"Internal Medicine - Interventional Cardiology"},{"id":"rch39","dialString":"5626865912","name":"Ryan Alvarez, PA","role":"APP - Physician Assistant - Orthopaedic Surgery","display":"(562)686-5912"},{"role":"Radiology - Neuroradiology","display":"(510)683-9500","name":"Matthew Alvin, MD","dialString":"5106839500","id":"rch40"},{"name":"Ahmed Al-Waisi, MD","display":"(872)806-9771","role":"Internal Medicine","dialString":"8728069771","id":"rch41"},{"id":"rch42","dialString":"4085719333","role":"Family Medicine","display":"(408)571-9333","name":"Harikrishna Ambati, MD"},{"id":"rch43","dialString":"3238233361","name":"Adnan Ameer, MD","role":"Internal Medicine - Gastroenterology","display":"(323)823-3361"},{"name":"Jason An, MD","display":"(714)770-9513","role":"Emergency Medicine","id":"rch44","dialString":"7147709513"},{"name":"Bradley Andersen, MD","role":"Internal Medicine - Rheumatology","display":"(951)533-3664","id":"rch45","dialString":"9515333664"},{"dialString":"7143504691","id":"rch46","display":"(714)350-4691","role":"Internal Medicine - Pulmonary Disease","name":"Scott Anderson, MD"},{"id":"rch47","dialString":"9012779994","display":"(901)277-9994","role":"Obstetrics & Gynecology","name":"Danielle Anderson, MD"},{"display":"(702)349-1470","role":"Obstetrics & Gynecology","name":"Frank Anderson, DO","dialString":"7023491470","id":"rch48"},{"id":"rch49","dialString":"8188098907","name":"Antonious Anis, MD","display":"(818)809-8907","role":"Critical Care Medicine"},{"dialString":"8104718747","id":"rch50","name":"Aamir Ansari, MD","role":"Pediatrics - Neonatal-Perinatal Medicine","display":"(810)471-8747"},{"dialString":"8582124009","id":"rch51","name":"Shahnawaz Ansari, MD","role":"Radiology - Diagnostic","display":"(858)212-4009"},{"dialString":"5204014490","id":"rch52","name":"Nenad Antic, MD","role":"Hematology/Oncology","display":"(520)401-4490"},{"role":"Obstetrics & Gynecology","display":"(732)841-0772","name":"Edsel Antonio, DO","id":"rch53","dialString":"7328410772"},{"name":"Jesusa Aquino, MD","role":"Pediatrics","display":"(909)827-7135","id":"rch54","dialString":"9098277135"},{"dialString":"8083934915","id":"rch55","name":"Chris Arca, MD","role":"Neurology w/ Special Qualifi. in Child Neurology","display":"(808)393-4915"},{"id":"rch56","dialString":"4016329235","display":"(401)632-9235","role":"Internal Medicine - Gastroenterology","name":"Erick Argueta, MD"},{"id":"rch57","dialString":"9095699536","display":"(909)569-9536","role":"Neurology","name":"Rajan Preet Arora, MD"},{"dialString":"9095699596","id":"rch58","display":"(909)569-9596","role":"Neurology w/ Special Qualifi. in Child Neurology","name":"Maninder Arora, MD"},{"name":"Saurabh Ashier, PA","display":"(310)625-8041","role":"APP - Physician Assistant","id":"rch59","dialString":"3106258041"},{"id":"rch60","dialString":"8184801418","display":"(818)480-1418","role":"Internal Medicine","name":"Anousheh Ashouri, MD"},{"id":"rch61","dialString":"9173598164","display":"(917)359-8164","role":"Internal Medicine - Clinical Cardiac Electrophysiology","name":"Ramin Ashtiani, MD"},{"id":"rch62","dialString":"5129649213","name":"Soe Aung, MD","display":"(512)964-9213","role":"Neurology - Clinical Neurophysiology"},{"dialString":"9513157210","id":"rch63","name":"Teresa Avants, MD","display":"(951)315-7210","role":"Obstetrics & Gynecology"},{"dialString":"9512953252","id":"rch64","role":"Pediatrics - Neonatal-Perinatal Medicine","display":"(951)295-3252","name":"Joseph Awadalla, MD"},{"dialString":"9512351030","id":"rch65","name":"Rizwan Badar, MD","display":"(951)235-1030","role":"Internal Medicine - Nephrology"},{"dialString":"5105667476","id":"rch66","display":"(510)566-7476","role":"Internal Medicine","name":"Bassam Bader, MD"},{"id":"rch67","dialString":"5109097122","name":"Nawal Badran, MD","display":"(510)909-7122","role":"Internal Medicine"},{"id":"rch68","dialString":"6463619315","name":"Bita Bagheri, MD","role":"Dermatology","display":"(646)361-9315"},{"display":"(317)405-7112","role":"Psychiatry","name":"Yokesh Balaraman, MD","id":"rch69","dialString":"3174057112"},{"name":"Jesus Baldonado, MD","display":"(707)372-3622","role":"Obstetrics & Gynecology","dialString":"7073723622","id":"rch70"},{"display":"(914)420-3826","role":"Neurological Surgery","name":"Benjamin Ball, MD","id":"rch71","dialString":"9144203826"},{"role":"Anesthesiology","display":"(909)241-3825","name":"David Baloga, MD","id":"rch72","dialString":"9092413825"},{"dialString":"7144226758","id":"rch73","name":"Maryam Banan, NP","display":"(714)422-6758","role":"APP - Nurse Practitioner - Surgery"},{"name":"Lisa Banh, PA-C","display":"(909)437-3137","role":"APP - Physician Assistant","id":"rch74","dialString":"9094373137"},{"role":"Thoracic & Cardiac Surgery","display":"(909)224-8694","name":"Neeraj Bansal, MD","id":"rch75","dialString":"9092248694"},{"dialString":"7148158585","id":"rch76","name":"Rehana Baqai, MD","display":"(714)815-8585","role":"Internal Medicine - Hematology"},{"name":"Ruchama Barkai, CRNA","role":"APP - Certified Nurse Anesthetist","display":"(410)585-7241","dialString":"4105857241","id":"rch77"},{"display":"(951)595-2401","role":"APP - Nurse Practitioner","name":"Nicole Barnard, APRN, CNP, FNP","dialString":"9515952401","id":"rch78"},{"id":"rch79","dialString":"6306995068","role":"Obstetrics & Gynecology","display":"(630)699-5068","name":"Kathryn Barron, MD"},{"role":"Internal Medicine","display":"(908)500-2120","name":"Ryan Basak, MD","id":"rch80","dialString":"9085002120"},{"dialString":"9095964346","id":"rch81","role":"Orthopaedic Surgery","display":"(909)596-4346","name":"Hrayr Basmajian, MD"},{"id":"rch82","dialString":"5857700945","name":"Ahmed Bata, MD","role":"Orthopaedic Surgery","display":"(585)770-0945"},{"name":"Joshua Batt, DO","display":"(909)637-6207","role":"Emergency Medicine","dialString":"9096376207","id":"rch83"},{"id":"rch84","dialString":"7205604955","name":"Hope Beatte, MD","role":"Psychiatry","display":"(720)560-4955"},{"id":"rch85","dialString":"9515337452","name":"Judith Bedoy, MD","role":"Pediatrics","display":"(951)533-7452"},{"role":"APP - Certified Nurse Anesthetist","display":"(714)514-9145","name":"Zachary Beko, CRNA","id":"rch86","dialString":"7145149145"},{"name":"Richard Benavidez, PA","role":"APP - Physician Assistant","display":"(816)835-1048","dialString":"8168351048","id":"rch87"},{"role":"Internal Medicine","display":"(718)309-0355","name":"Samantha Benin, MD","dialString":"7183090355","id":"rch88"},{"name":"Della Bennett, MD","display":"(909)556-2450","role":"Plastic Surgery","id":"rch89","dialString":"9095562450"},{"name":"James Berdahl, CRNA","display":"(507)277-9799","role":"APP - Certified Nurse Anesthetist","id":"rch90","dialString":"5072779799"},{"dialString":"9099108364","id":"rch91","name":"David Berke, DO","display":"(909)910-8364","role":"Obstetrics & Gynecology"},{"name":"David Bernstein, MD","display":"(917)971-7464","role":"Surgery","id":"rch92","dialString":"9179717464"},{"display":"(858)336-9417","role":"Internal Medicine","name":"Sandhya Bhalla-Regev, MD","id":"rch93","dialString":"8583369417"},{"name":"Shiv Bhanu, MD","display":"(951)966-3842","role":"Radiology - Diagnostic","dialString":"9519663842","id":"rch94"},{"dialString":"4029178498","id":"rch95","role":"Plastic Surgery","display":"(402)917-8498","name":"Amardip Bhuller, MD"},{"name":"Michael Bishara, MD","role":"Internal Medicine","display":"(951)313-7403","dialString":"9513137403","id":"rch96"},{"name":"Mimi Biswas, MD","display":"(951)941-7956","role":"Internal Medicine - Cardiovascular Disease","id":"rch97","dialString":"9519417956"},{"display":"(951)312-6051","role":"Thoracic & Cardiac Surgery","name":"Shankha Biswas, MD","id":"rch98","dialString":"9513126051"},{"role":"Orthopaedic Surgery","display":"(707)738-2836","name":"Lee Blanton, MD","id":"rch99","dialString":"7077382836"},{"dialString":"9493009720","id":"rch100","name":"Barbara Blasko, MD","role":"Emergency Medicine","display":"(949)300-9720"},{"name":"Summer Blount, MD","display":"(304)674-6965","role":"Pathology - Anatomic/Clinical Pathology","id":"rch101","dialString":"3046746965"},{"name":"Alexandra Bock, CRNA","display":"(714)469-8759","role":"APP - Certified Nurse Anesthetist","dialString":"7144698759","id":"rch102"},{"dialString":"9514156045","id":"rch103","name":"Patricia Bogema, DO","display":"(951)415-6045","role":"Internal Medicine"},{"id":"rch104","dialString":"9515224112","name":"Syed Bokhari, MD","display":"(951)522-4112","role":"Internal Medicine - Cardiovascular Disease"},{"dialString":"9258583835","id":"rch105","name":"Krishna Bommakanti, MD","role":"Otolaryngology","display":"(925)858-3835"},{"name":"Stephen Boykins, DPM","display":"(562)266-4396","role":"Podiatry","dialString":"5622664396","id":"rch106"},{"name":"Hetal Brahmbhatt, MD","role":"Psychiatry","display":"(423)767-5444","id":"rch107","dialString":"4237675444"},{"id":"rch108","dialString":"9517435979","name":"Harbinder Brar, MD","display":"(951)743-5979","role":"Obstetrics & Gynecology - Maternal and Fetal Medicine"},{"dialString":"9517767010","id":"rch109","name":"Barbara Brar, MD","role":"Anesthesiology","display":"(951)776-7010"},{"dialString":"9512885851","id":"rch110","role":"Obstetrics & Gynecology - Maternal and Fetal Medicine","display":"(951)288-5851","name":"Bobby Brar, MD"},{"dialString":"9089141437","id":"rch111","name":"Pooja Brar, MD","role":"Obstetrics & Gynecology - Maternal and Fetal Medicine","display":"(908)914-1437"},{"display":"(909)633-9645","role":"Emergency Medicine","name":"Ryan Brenchley, MD","id":"rch112","dialString":"9096339645"},{"name":"Kelsey Bridger, PA","display":"(415)713-4220","role":"APP - Physician Assistant","dialString":"4157134220","id":"rch113"},{"id":"rch114","dialString":"9516752682","name":"Scott Brown, PA","display":"(951)675-2682","role":"APP - Physician Assistant"},{"id":"rch115","dialString":"5592592818","name":"Dhiren Buch, MD","role":"Anesthesiology","display":"(559)259-2818"},{"id":"rch116","dialString":"9495256988","name":"Natalie Bui, NP","role":"APP - Nurse Practitioner","display":"(949)525-6988"},{"name":"Duy Bui, MD","display":"(805)509-4466","role":"Radiology - Diagnostic","id":"rch117","dialString":"8055094466"},{"id":"rch118","dialString":"7149045008","name":"Mindy Bui, DO","display":"(714)904-5008","role":"Internal Medicine - Critical Care Medicine"},{"id":"rch119","dialString":"9092151177","name":"Daniel Caballero, PA-C","display":"(909)215-1177","role":"APP - Physician Assistant"},{"id":"rch120","dialString":"2093274027","name":"Bradley Cacho, MD","role":"Pediatrics - Neonatal-Perinatal Medicine","display":"(209)327-4027"},{"dialString":"9519902992","id":"rch121","name":"Leticia Campbell, MD","display":"(951)990-2992","role":"Obstetrics & Gynecology"},{"id":"rch122","dialString":"6014984910","name":"Victoria Cannon, MD","role":"Neurology","display":"(601)498-4910"},{"name":"Mario Carcamo, MD","role":"Pediatrics","display":"(951)536-0526","id":"rch123","dialString":"9515360526"},{"id":"rch124","dialString":"4753555082","display":"(475)355-5082","role":"Obstetrics & Gynecology","name":"Carlos Cardenas, MD"},{"id":"rch125","dialString":"9099572927","role":"APP - Physician Assistant","display":"(909)957-2927","name":"Brian Carrillo, PA"},{"name":"Emma Carter, MD","display":"(803)319-2540","role":"Neurology","id":"rch126","dialString":"8033192540"},{"name":"Yas Casey, MD","role":"Internal Medicine","display":"(714)209-8872","dialString":"7142098872","id":"rch127"},{"role":"Pediatrics","display":"(951)529-8987","name":"Stacy Catalon, MD","id":"rch128","dialString":"9515298987"},{"dialString":"9515298087","id":"rch129","display":"(951)529-8087","role":"Pediatrics","name":"Samuel Catalon, MD"},{"dialString":"7144183393","id":"rch130","name":"Benjamin Caudill, NP","role":"APP - Nurse Practitioner - Family Medicine","display":"(714)418-3393"},{"name":"Kristina Cendrowski, MD","role":"Pathology - Anatomic/Clinical Pathology","display":"(586)344-3302","dialString":"5863443302","id":"rch131"},{"name":"James Cernilia, MD","display":"(949)798-6100","role":"Thoracic & Cardiac Surgery","dialString":"9497986100","id":"rch132"},{"role":"APP - Nurse Practitioner - Family Medicine","display":"(951)534-4866","name":"Hailey Chace, RN, APRN, CNP, FNP","dialString":"9515344866","id":"rch133"},{"display":"(330)554-6723","role":"Obstetrics & Gynecology","name":"Clara Chae, MD","id":"rch134","dialString":"3305546723"},{"id":"rch135","dialString":"9513343866","name":"Sarah Chae, MD","display":"(951)334-3866","role":"Internal Medicine"},{"name":"Sirivalli Chamarti, MD","display":"(973)462-5432","role":"Emergency Medicine","id":"rch136","dialString":"9734625432"},{"dialString":"5623313049","id":"rch137","display":"(562)331-3049","role":"Ophthalmology","name":"Eric Chan, MD"},{"display":"(310)951-0994","role":"Orthopaedic Surgery","name":"Jason Chan, MD","dialString":"3109510994","id":"rch138"},{"dialString":"7187105875","id":"rch139","name":"Vivian Chang, MD","display":"(718)710-5875","role":"Pediatrics - Neonatal-Perinatal Medicine"},{"dialString":"3105039996","id":"rch140","display":"(310)503-9996","role":"Ophthalmology","name":"Salma Chaudhri, MD"},{"dialString":"9132094619","id":"rch141","role":"Surgery - Surgical Critical Care","display":"(913)209-4619","name":"Bhani Chawla-Kondal, MD"},{"dialString":"3235749450","id":"rch142","name":"Marta Cheatham-Lott, MD","display":"(323)574-9450","role":"Obstetrics & Gynecology"},{"dialString":"9095100587","id":"rch143","name":"Georgina Chen, PA","role":"APP - Physician Assistant","display":"(909)510-0587"},{"display":"(562)396-6393","role":"Physical Medicine & Rehabilitation - Pain Medicine","name":"Hamilton Chen, MD","id":"rch144","dialString":"5623966393"},{"role":"Urology","display":"(248)719-5201","name":"Avinash Chenam, MD","id":"rch145","dialString":"2487195201"},{"name":"Jean Cheng, MD","role":"Ophthalmology","display":"(619)280-1277","id":"rch146","dialString":"6192801277"},{"role":"Orthopaedic Surgery","display":"(909)991-9224","name":"Wayne Cheng, MD","dialString":"9099919224","id":"rch147"},{"role":"Internal Medicine","display":"(949)202-8149","name":"Jeremiah Cheng, MD","id":"rch148","dialString":"9492028149"},{"name":"Cynthia Cheng, MD","role":"Family Medicine","display":"(202)487-1245","dialString":"2024871245","id":"rch149"},{"dialString":"9512845593","id":"rch150","display":"(951)284-5593","role":"Allergy and Immunology","name":"William Cherry, MD"},{"role":"Orthopaedic Surgery","display":"(714)552-8343","name":"Sunny Cheung, MD","id":"rch151","dialString":"7145528343"},{"dialString":"9092275138","id":"rch152","name":"Lacee Childers, PA","display":"(909)227-5138","role":"APP - Physician Assistant"},{"name":"Ben Childers, MD","role":"Plastic Surgery","display":"(909)810-8150","id":"rch153","dialString":"9098108150"},{"dialString":"9515322230","id":"rch154","role":"Surgery","display":"(951)532-2230","name":"Michael Chin, MD"},{"display":"(408)691-5639","role":"General Surgery","name":"Edward Cho, MD","dialString":"4086915639","id":"rch155"},{"dialString":"9092706643","id":"rch156","name":"Sarah Choi, PA-C","display":"(909)270-6643","role":"APP - Physician Assistant"},{"name":"Brian Choi, MD","role":"Internal Medicine - Medical Oncology","display":"(951)533-0938","dialString":"9515330938","id":"rch157"},{"dialString":"9492415820","id":"rch158","name":"Gene Choi, MD","role":"Orthopaedic Surgery","display":"(949)241-5820"},{"id":"rch159","dialString":"6102998663","role":"Internal Medicine - Gastroenterology","display":"(610)299-8663","name":"Eric Choi, MD"},{"dialString":"7323435749","id":"rch160","name":"Farys Chowdhury, DO","role":"Anesthesiology","display":"(732)343-5749"},{"name":"Seth Christensen, PA","role":"APP - Physician Assistant","display":"(909)260-7457","id":"rch161","dialString":"9092607457"},{"role":"Family Medicine","display":"(951)990-2608","name":"Colin Christensen, DO","dialString":"9519902608","id":"rch162"},{"dialString":"8052171648","id":"rch163","name":"Eric Chu, MD","role":"Family Medicine","display":"(805)217-1648"},{"name":"Jennifer Chu, MD","display":"(858)882-5095","role":"Neurology","id":"rch164","dialString":"8588825095"},{"dialString":"7146236639","id":"rch165","name":"Tin Chu, MD","display":"(714)623-6639","role":"Family Medicine"},{"dialString":"9516437760","id":"rch166","role":"Orthopaedic Surgery","display":"(951)643-7760","name":"Keolanui Chun, MD"},{"display":"(734)834-4576","role":"General Surgery","name":"Hugh Chung, MD","id":"rch167","dialString":"7348344576"},{"role":"Anesthesiology","display":"(818)395-9915","name":"Brian Chung, MD","id":"rch168","dialString":"8183959915"},{"id":"rch169","dialString":"9098386155","name":"Christopher Church, MD","role":"Otolaryngology","display":"(909)838-6155"},{"id":"rch170","dialString":"8083398720","name":"Kenneth Clayton, DO","role":"Obstetrics & Gynecology","display":"(808)339-8720"},{"dialString":"9092855226","id":"rch171","display":"(909)285-5226","role":"APP - Nurse Practitioner","name":"Carrie Cobos, FNP"},{"display":"(914)629-8123","role":"Neurology","name":"Jeffrey Cohen, MD","id":"rch172","dialString":"9146298123"},{"role":"Internal Medicine","display":"(909)665-3560","name":"Timothy Collins, DO","dialString":"9096653560","id":"rch173"},{"name":"Mercedes Corlew, PA","display":"(951)522-2211","role":"APP - Physician Assistant - Internal Medicine","dialString":"9515222211","id":"rch174"},{"dialString":"9513233966","id":"rch175","name":"Andrew Corr, MD","role":"Internal Medicine","display":"(951)323-3966"},{"name":"Jasmine Correa, MD","display":"(909)912-4012","role":"Obstetrics & Gynecology","dialString":"9099124012","id":"rch176"},{"id":"rch177","dialString":"8134182942","display":"(813)418-2942","role":"Radiology - Interventional & Diagnostic Radiology","name":"Jennifer Correia, MD"},{"dialString":"4253018413","id":"rch178","name":"Chelsea Cosand, MD","display":"(425)301-8413","role":"Emergency Medicine"},{"role":"Emergency Medicine","display":"(323)350-1710","name":"John Christian Costumbrado, MD","id":"rch179","dialString":"3233501710"},{"role":"Cardiology","display":"(909)802-9508","name":"Jeremy Cox, DO","dialString":"9098029508","id":"rch180"},{"id":"rch181","dialString":"9512202031","name":"Anthony Cramer, PA","display":"(951)220-2031","role":"APP - Physician Assistant"},{"name":"Dennis Cramer, DO","display":"(951)743-3609","role":"Neurological Surgery","id":"rch182","dialString":"9517433609"},{"dialString":"6105337558","id":"rch183","display":"(610)533-7558","role":"Internal Medicine","name":"Melanie Crane, MD"},{"role":"Orthopaedic Surgery","display":"(858)337-2373","name":"Ronald Crater, MD","dialString":"8583372373","id":"rch184"},{"dialString":"8479123935","id":"rch185","name":"Janet Cruz, MD","display":"(847)912-3935","role":"Obstetrics & Gynecology"},{"dialString":"3135957329","id":"rch186","name":"Ivan Cubas, MD","display":"(313)595-7329","role":"Internal Medicine - Gastroenterology"},{"id":"rch187","dialString":"9512185108","name":"Sonia Daher, NP","display":"(951)218-5108","role":"APP - Nurse Practitioner"},{"dialString":"6198857441","id":"rch188","name":"Chuong Dang, MD, MPH","role":"Pediatrics","display":"(619)885-7441"},{"display":"(323)574-3773","role":"Orthopaedic Surgery","name":"Brent D'Arc, MD","id":"rch189","dialString":"3235743773"},{"name":"Melissa Davis, NP","display":"(774)283-3066","role":"APP - Nurse Practitioner - Family Medicine","id":"rch190","dialString":"7742833066"},{"display":"(818)636-4909","role":"Neurology","name":"Rony Dekermenjian, MD","dialString":"8186364909","id":"rch191"},{"id":"rch192","dialString":"3108829781","name":"Belinda DeLaTorre, PA","display":"(310)882-9781","role":"APP - Physician Assistant"},{"id":"rch193","dialString":"9516427890","name":"Veronica Delgado, APRN, CNP, FNP","role":"APP - Nurse Practitioner","display":"(951)642-7890"},{"name":"MIchael Deo, MD","display":"(909)275-6024","role":"Emergency Medicine","id":"rch194","dialString":"9092756024"},{"name":"Adeeb Derakhshan, MD","role":"Otolaryngology","display":"(304)881-3170","id":"rch195","dialString":"3048813170"},{"id":"rch196","dialString":"9092601355","display":"(909)260-1355","role":"Anesthesiology","name":"Mahesh Desilva, MD"},{"dialString":"9515656040","id":"rch197","name":"Steven Deterville, MD","display":"(951)565-6040","role":"Pediatrics"},{"name":"Raja Dhalla, MD","role":"Orthopaedic Surgery","display":"(951)347-1895","dialString":"9513471895","id":"rch198"},{"dialString":"3109387285","id":"rch199","display":"(310)938-7285","role":"Thoracic & Cardiac Surgery","name":"Puneet Dhawan, MD"},{"id":"rch200","dialString":"9512554145","display":"(951)255-4145","role":"Orthopaedic Surgery","name":"Harkeerat Dhillon, MD"},{"dialString":"9513139742","id":"rch201","role":"Internal Medicine - Endocrinology, Diabetes & Metabolism","display":"(951)313-9742","name":"Freddie Dial, MD"},{"dialString":"9518973429","id":"rch202","display":"(951)897-3429","role":"Obstetrics & Gynecology","name":"Maria Diaz, MD"},{"name":"Hiram Diaz Diaz, CRNA","display":"(949)257-5734","role":"APP - Certified Nurse Anesthetist","id":"rch203","dialString":"9492575734"},{"dialString":"6463460059","id":"rch204","display":"(646)346-0059","role":"Psychiatry","name":"Venkata Diddi, MD"},{"role":"Obstetrics & Gynecology","display":"(661)246-6796","name":"Keith Dillon, MD","dialString":"6612466796","id":"rch205"},{"id":"rch206","dialString":"9512022514","role":"APP - Certified Nurse Anesthetist","display":"(951)202-2514","name":"Mark DiMaggio, CRNA"},{"display":"(951)259-6178","role":"Obstetrics & Gynecology","name":"Sudhakar Dixit, MD","id":"rch207","dialString":"9512596178"},{"id":"rch208","dialString":"9096326948","display":"(909)632-6948","role":"Emergency Medicine","name":"Nhan Do, MD"},{"display":"(714)654-1628","role":"Anesthesiology","name":"Michael Do, MD","dialString":"7146541628","id":"rch209"},{"id":"rch210","dialString":"4084605374","name":"Trieu Do, MD","display":"(408)460-5374","role":"Surgery - Surgical Critical Care"},{"name":"Vien Doan, DO","role":"Family Medicine","display":"(951)776-7729","id":"rch211","dialString":"9517767729"},{"name":"David Dong, MD","display":"(714)366-4266","role":"Pediatrics","id":"rch212","dialString":"7143664266"},{"display":"(202)340-7575","role":"Urology","name":"Steve Dong, MD","id":"rch213","dialString":"2023407575"},{"role":"Emergency Medicine","display":"(801)671-8901","name":"Cathy Dong, MD","dialString":"8016718901","id":"rch214"},{"display":"(949)285-7410","role":"Internal Medicine - Gastroenterology","name":"Barry Donner, MD","id":"rch215","dialString":"9492857410"},{"id":"rch216","dialString":"4029093599","name":"Cassandra Dotson, CRNA","role":"APP - Certified Nurse Anesthetist","display":"(402)909-3599"},{"id":"rch217","dialString":"9517560728","name":"Joel Doughten, MD","role":"Family Medicine","display":"(951)756-0728"},{"display":"(951)206-2464","role":"Neurological Surgery","name":"Clifford Douglas, MD","id":"rch218","dialString":"9512062464"},{"role":"APP - Nurse Practitioner - Hematology & Medical Oncology","display":"(818)274-6818","name":"Mariene Doukoure Balde, NP","id":"rch219","dialString":"8182746818"},{"display":"(858)776-2278","role":"Surgery - Surgical Critical Care","name":"Emily Dubina, MD","id":"rch220","dialString":"8587762278"},{"role":"APP - Nurse Practitioner - Surgery","display":"(760)822-4912","name":"Jaedeleen Duggan, NP","dialString":"7608224912","id":"rch221"},{"dialString":"4156093252","id":"rch222","role":"APP - Nurse Practitioner","display":"(415)609-3252","name":"Wendee Duhon, NP"},{"name":"Andrew Duke, MD","role":"Internal Medicine - Pulmonary Disease","display":"(714)315-5759","dialString":"7143155759","id":"rch223"},{"id":"rch224","dialString":"9513290530","role":"Internal Medicine","display":"(951)329-0530","name":"Ronald Dulos, MD"},{"role":"Neurology","display":"(562)209-5556","name":"Karen Dumars, MD","dialString":"5622095556","id":"rch225"},{"id":"rch226","dialString":"4083141231","role":"Obstetrics & Gynecology","display":"(408)314-1231","name":"Vicki Duncan, MD"},{"dialString":"9512401237","id":"rch227","name":"Christin Dziadowicz, NP","role":"APP - Nurse Practitioner","display":"(951)240-1237"},{"role":"APP - Physician Assistant - Internal Medicine","display":"(714)393-5802","name":"Aubree Edwards, PA","dialString":"7143935802","id":"rch228"},{"role":"Internal Medicine","display":"(949)394-6195","name":"Sahar Eivaz Mohammadi, MD","dialString":"9493946195","id":"rch229"},{"dialString":"8583615243","id":"rch230","name":"Hesham El Mokadem, MD","display":"(858)361-5243","role":"Obstetrics & Gynecology"},{"name":"Ahmed El-Bershawi, MD","display":"(949)874-9071","role":"Internal Medicine - Pulmonary Disease","id":"rch231","dialString":"9498749071"},{"role":"Obstetrics & Gynecology","display":"(920)461-8402","name":"Anas Elias, MD","id":"rch232","dialString":"9204618402"},{"id":"rch233","dialString":"3237047771","role":"Internal Medicine - Pulmonary Disease","display":"(323)704-7771","name":"Sherif Elkinany, MD"},{"name":"Peter Elsissy, MD","display":"(714)924-0804","role":"Orthopaedic Surgery","dialString":"7149240804","id":"rch234"},{"id":"rch235","dialString":"7142045947","name":"Joseph Elsissy, MD","display":"(714)204-5947","role":"Orthopaedic Surgery"},{"name":"Aras Emdadi, DO","display":"(510)816-4443","role":"Surgery","dialString":"5108164443","id":"rch236"},{"id":"rch237","dialString":"9098166085","role":"Obstetrics & Gynecology","display":"(909)816-6085","name":"Iheanacho Emeruwa, MD"},{"display":"(214)566-7385","role":"Obstetrics & Gynecology","name":"Irwin Endelman, MD","dialString":"2145667385","id":"rch238"},{"id":"rch239","dialString":"7603102233","name":"Ronald Enriquez, MD","display":"(760)310-2233","role":"Anesthesiology"},{"display":"(818)335-5061","role":"Internal Medicine - Gastroenterology","name":"Daniel Eshaghian, DO","dialString":"8183355061","id":"rch240"},{"role":"Internal Medicine","display":"(949)842-9310","name":"Samia Faiz, MD","dialString":"9498429310","id":"rch241"},{"name":"Juston Fan, DO","display":"(505)259-5822","role":"Orthopaedic Surgery","dialString":"5052595822","id":"rch242"},{"name":"Joseph Fargusson, MD","role":"Emergency Medicine","display":"(916)838-2237","id":"rch243","dialString":"9168382237"},{"name":"Frederica Fayad, MD","role":"Pediatrics","display":"(951)801-8185","dialString":"9518018185","id":"rch244"},{"id":"rch245","dialString":"8182946704","role":"Internal Medicine","display":"(818)294-6704","name":"Victor Fayad, MD"},{"id":"rch246","dialString":"2146867032","display":"(214)686-7032","role":"Surgery","name":"Benjamin Fegale, MD"},{"name":"Gary Feinberg, MD","display":"(951)544-6020","role":"Otolaryngology","id":"rch247","dialString":"9515446020"},{"id":"rch248","dialString":"9513127676","name":"Anthony Fenison, MD","display":"(951)312-7676","role":"Orthopaedic Surgery"},{"dialString":"5627562426","id":"rch249","role":"APP - Nurse Practitioner","display":"(562)756-2426","name":"Seung Ferro, APRN, CNP, AGNP-AC"},{"id":"rch250","dialString":"3105931616","name":"Daren Filsinger, MD","display":"(310)593-1616","role":"Anesthesiology"},{"role":"Neurology","display":"(216)272-5980","name":"Jay Fishleder Varma, MD","id":"rch251","dialString":"2162725980"},{"id":"rch252","dialString":"6269316901","name":"Alexis Florea, MD","role":"Pediatrics - Neonatal-Perinatal Medicine","display":"(626)931-6901"},{"id":"rch253","dialString":"9093795640","role":"Thoracic & Cardiac Surgery","display":"(909)379-5640","name":"Rosario Floridia, MD"},{"id":"rch254","dialString":"3107212285","display":"(310)721-2285","role":"Thoracic & Cardiac Surgery","name":"Gregory Fontana, MD"},{"display":"(619)977-1710","role":"Surgery","name":"Catherine Fontecha, MD","dialString":"6199771710","id":"rch255"},{"name":"Sophia Fornbacher, MD","role":"Emergency Medicine","display":"(925)726-8938","dialString":"9257268938","id":"rch256"},{"id":"rch257","dialString":"7144010731","display":"(714)401-0731","role":"Internal Medicine","name":"Munib Francis, DO"},{"role":"Internal Medicine - Rheumatology","display":"(909)946-8095","name":"Al Franco, MD","id":"rch258","dialString":"9099468095"},{"name":"Armando Franco, MD","role":"Family Medicine","display":"(951)505-2929","dialString":"9515052929","id":"rch259"},{"id":"rch260","dialString":"9512959227","role":"Internal Medicine","display":"(951)295-9227","name":"Armando Franco, MD"},{"role":"Physical Medicine & Rehabilitation - Pain Medicine","display":"(646)872-6630","name":"Darren Freeman, DO","id":"rch261","dialString":"6468726630"},{"dialString":"9092346252","id":"rch262","display":"(909)234-6252","role":"Internal Medicine - Pulmonary Disease","name":"Aimee French, MD"},{"role":"Orthopaedic Surgery","display":"(520)990-4171","name":"Michael French, DO","id":"rch263","dialString":"5209904171"},{"id":"rch264","dialString":"6023262072","name":"Lucas Friedman, MD","role":"Emergency Medicine","display":"(602)326-2072"},{"dialString":"9256986189","id":"rch265","role":"Otolaryngology","display":"(925)698-6189","name":"Jennifer Fuller, MD"},{"name":"Navid Furutan, MD","role":"Pediatrics","display":"(909)260-3938","id":"rch266","dialString":"9092603938"},{"name":"Gabriel Gabarain, MD","role":"Otolaryngology","display":"(440)289-4827","id":"rch267","dialString":"4402894827"},{"name":"Youhanna Gad, MD","display":"(732)762-9780","role":"Radiology - Interventional & Diagnostic Radiology","id":"rch268","dialString":"7327629780"},{"id":"rch269","dialString":"9519025742","display":"(951)902-5742","role":"Internal Medicine - Nephrology","name":"Arthur Galoustian, MD"},{"id":"rch270","dialString":"5127847651","role":"Obstetrics & Gynecology - Gynecologic Oncology","display":"(512)784-7651","name":"Valerie Galvan-Turner, MD"},{"id":"rch271","dialString":"9518703189","name":"Emely Garcia, CRNA","display":"(951)870-3189","role":"APP - Certified Nurse Anesthetist"},{"display":"(951)237-8296","role":"Obstetrics & Gynecology","name":"Carlo Garibaldi, DO","dialString":"9512378296","id":"rch272"},{"name":"Virginia Garrett, MD","role":"Physical Medicine & Rehabilitation","display":"(951)533-7666","id":"rch273","dialString":"9515337666"},{"dialString":"9512583181","id":"rch274","name":"Fatima Gauhar, MD","role":"Internal Medicine","display":"(951)258-3181"},{"dialString":"9097234514","id":"rch275","name":"Esmond Gee, MD","display":"(909)723-4514","role":"Colon and Rectal Surgery"},{"display":"(678)836-5166","role":"Internal Medicine","name":"Masoumeh Ghaffari, MD","id":"rch276","dialString":"6788365166"},{"role":"Internal Medicine","display":"(951)660-3996","name":"Gamal Ghaly, MD","dialString":"9516603996","id":"rch277"},{"dialString":"9519023451","id":"rch278","role":"APP - Physician Assistant - Cardiology","display":"(951)902-3451","name":"Hamzaa Ghani, PA"},{"id":"rch279","dialString":"9512174148","name":"Farideh Ghasemi, APRN, CNP, FNP","display":"(951)217-4148","role":"APP - Nurse Practitioner"},{"dialString":"8182316338","id":"rch280","role":"Emergency Medicine","display":"(818)231-6338","name":"Sassan Ghassemzadeh, MD"},{"id":"rch281","dialString":"2606153591","name":"Nikhil Ghatnekar, DO","role":"Cardiology","display":"(260)615-3591"},{"display":"(818)445-3114","role":"Neurology - Clinical Neurophysiology","name":"Forough Ghavami Shirehjini, DO","id":"rch282","dialString":"8184453114"},{"id":"rch283","dialString":"9098099211","role":"Orthopaedic Surgery","display":"(909)809-9211","name":"Ronny Ghazal, MD"},{"name":"Zeron Ghazarian, MD","display":"(201)920-8589","role":"Internal Medicine - Pulmonary Disease","dialString":"2019208589","id":"rch284"},{"dialString":"3104304513","id":"rch285","role":"Internal Medicine","display":"(310)430-4513","name":"Michael Ghods, MD"},{"name":"Indrani Gill, MD","role":"Internal Medicine - Medical Oncology","display":"(714)504-9782","id":"rch286","dialString":"7145049782"},{"name":"Gregory Gilmore, DO","display":"(818)458-9621","role":"Internal Medicine - Hematology","id":"rch287","dialString":"8184589621"},{"role":"Neurology","display":"(414)324-5083","name":"Mark Girgis, DO","dialString":"4143245083","id":"rch288"},{"id":"rch289","dialString":"9097547028","role":"Emergency Medicine - Emergency Medical Services","display":"(909)754-7028","name":"Julia Glavinic, MD"},{"dialString":"9518305874","id":"rch290","display":"(951)830-5874","role":"Ophthalmology","name":"Ray Glendrange, MD"},{"id":"rch291","dialString":"9166061820","display":"(916)606-1820","role":"Internal Medicine","name":"Hamza Gohar, DO"},{"role":"Obstetrics & Gynecology","display":"(951)233-2968","name":"Guillermo Gomez, MD","dialString":"9512332968","id":"rch292"},{"dialString":"9092372944","id":"rch293","display":"(909)237-2944","role":"APP - Nurse Practitioner - Family Medicine","name":"Sarina Gonzales, FNP"},{"id":"rch294","dialString":"6266437699","name":"Andres Gonzalez, MD","display":"(626)643-7699","role":"Neurology"},{"dialString":"7143573034","id":"rch295","name":"Ronald Goubert, MD","role":"Emergency Medicine","display":"(714)357-3034"},{"name":"Christopher Grable, NP","role":"APP - Nurse Practitioner - Pulmonary Disease","display":"(951)642-8737","id":"rch296","dialString":"9516428737"},{"dialString":"9099369750","id":"rch297","role":"Orthopaedic Surgery - Orthopaedic Sports Medicine","display":"(909)936-9750","name":"Barry Grames, MD"},{"display":"(949)413-4024","role":"Vascular Surgery","name":"Prabhjot Grewal, MD","id":"rch298","dialString":"9494134024"},{"name":"Rajesh Gulati, MD","display":"(317)650-1022","role":"Internal Medicine","dialString":"3176501022","id":"rch299"},{"dialString":"9518672888","id":"rch300","name":"Mukesh Gupta, MD","role":"Anesthesiology","display":"(951)867-2888"},{"id":"rch301","dialString":"6463791417","display":"(646)379-1417","role":"Pediatrics","name":"Shilpa Gupta, MD"},{"id":"rch302","dialString":"9513136843","role":"Otolaryngology","display":"(951)313-6843","name":"Amar Gupta, MD"},{"dialString":"9519013986","id":"rch303","name":"Anushree Gupta, MD","display":"(951)901-3986","role":"Family Medicine"},{"id":"rch304","dialString":"9092416415","name":"Richard Guzman, MD","display":"(909)241-6415","role":"Family Medicine"},{"name":"Hongphuc Ha, DO","role":"Surgery","display":"(714)595-8742","dialString":"7145958742","id":"rch305"},{"dialString":"5023810226","id":"rch306","role":"Urology","display":"(502)381-0226","name":"Ahmed Haddad, MD"},{"display":"(949)338-3566","role":"APP - Nurse Practitioner","name":"Annie Hadfield, NP","id":"rch307","dialString":"9493383566"},{"name":"Sana Hadyah, MD","display":"(909)685-5964","role":"Emergency Medicine","id":"rch308","dialString":"9096855964"},{"id":"rch309","dialString":"7026007352","name":"Thomas Haider, MD","display":"(702)600-7352","role":"Orthopaedic Surgery"},{"name":"William Hamra, MD","display":"(909)583-3850","role":"Pediatrics","id":"rch310","dialString":"9095833850"},{"name":"Salim Harianawala, MD","display":"(678)628-9952","role":"Internal Medicine - Pulmonary Disease","dialString":"6786289952","id":"rch311"},{"name":"James Hartleroad, MD","role":"Thoracic & Cardiac Surgery","display":"(626)390-9456","dialString":"6263909456","id":"rch312"},{"id":"rch313","dialString":"6199901698","name":"Tarek Hassanein, MD","role":"Internal Medicine - Gastroenterology","display":"(619)990-1698"},{"id":"rch314","dialString":"7342391342","name":"Matthew Hastings, MD","display":"(734)239-1342","role":"Neurology"},{"display":"(315)783-0361","role":"Orthopaedic Surgery","name":"Christopher Hayes, MD","dialString":"3157830361","id":"rch315"},{"id":"rch316","dialString":"9516942031","display":"(951)694-2031","role":"Obstetrics & Gynecology","name":"Tammy Hayton, MD"},{"display":"(774)444-1004","role":"Internal Medicine","name":"Baker Hillawy, MD","id":"rch317","dialString":"7744441004"},{"display":"(951)233-3312","role":"Family Medicine","name":"Vanessa Ho, MD","dialString":"9512333312","id":"rch318"},{"id":"rch319","dialString":"6099921734","name":"Martin Hoang, MD","role":"Critical Care Medicine","display":"(609)992-1734"},{"dialString":"9516403249","id":"rch320","name":"Bruce Holmblad, MD","display":"(951)640-3249","role":"Anesthesiology"},{"dialString":"3102209890","id":"rch321","display":"(310)220-9890","role":"Obstetrics & Gynecology","name":"Karen Hong, DO"},{"name":"Gail Hopkins, MD","display":"(909)633-3537","role":"Orthopaedic Surgery","dialString":"9096333537","id":"rch322"},{"display":"(858)353-8592","role":"Internal Medicine - Cardiovascular Disease","name":"Patrick Hu, MD","dialString":"8583538592","id":"rch323"},{"role":"Emergency Medicine","display":"(408)315-3901","name":"Jeffrey Hu, MD","id":"rch324","dialString":"4083153901"},{"name":"Galen Huang, MD","display":"(951)212-6026","role":"Internal Medicine - Gastroenterology","dialString":"9512126026","id":"rch325"},{"dialString":"9493364402","id":"rch326","role":"Internal Medicine - Hematology","display":"(949)336-4402","name":"Daniel Huang, MD"},{"id":"rch327","dialString":"9092682721","role":"APP - Nurse Practitioner","display":"(909)268-2721","name":"Shawn Hurley, APRN, CNP, FNP"},{"dialString":"9093319598","id":"rch328","role":"APP - Physician Assistant","display":"(909)331-9598","name":"Tiffany Hwang, PA"},{"id":"rch329","dialString":"9498749264","name":"Andrew Hwang, MD","display":"(949)874-9264","role":"Internal Medicine"},{"dialString":"8188542601","id":"rch330","role":"APP - Nurse Practitioner - Family Medicine","display":"(818)854-2601","name":"Beaivana Ibarra, NP"},{"id":"rch331","dialString":"9517438906","name":"Waseem Ibrahim, MD","role":"Neurology","display":"(951)743-8906"},{"dialString":"9512172586","id":"rch332","name":"Syed Iftikhar, MD","role":"Internal Medicine - Interventional Cardiology","display":"(951)217-2586"},{"id":"rch333","dialString":"9098002054","name":"Jared Inman, MD","role":"Otolaryngology","display":"(909)800-2054"},{"id":"rch334","dialString":"9517412181","name":"Shams Iqbal, MD","role":"Allergy and Immunology","display":"(951)741-2181"},{"dialString":"9098383335","id":"rch335","name":"Daniel Iracheta, PA","role":"APP - Physician Assistant - Emergency Medicine","display":"(909)838-3335"},{"dialString":"3106506837","id":"rch336","role":"Obstetrics & Gynecology","display":"(310)650-6837","name":"Mohamedali Ismailjee, MD"},{"display":"(216)543-7022","role":"Internal Medicine - Nephrology","name":"Mosen Istwani, MD","id":"rch337","dialString":"2165437022"},{"dialString":"2817953670","id":"rch338","role":"Internal Medicine - Medical Oncology","display":"(281)795-3670","name":"Laxmi Iyer, MD"},{"dialString":"9514536256","id":"rch339","role":"Family Medicine","display":"(951)453-6256","name":"Harold Jackson, DO"},{"name":"Bill Jacobsen, MD","role":"Neurology","display":"(402)415-6367","id":"rch340","dialString":"4024156367"},{"name":"Amer Jandali, MD","role":"Internal Medicine - Cardiovascular Disease","display":"(951)259-2597","id":"rch341","dialString":"9512592597"},{"name":"Jenny Jean, MD","role":"Obstetrics & Gynecology","display":"(617)777-0233","id":"rch342","dialString":"6177770233"},{"display":"(714)785-8093","role":"Internal Medicine - Medical Oncology","name":"Haresh Jhangiani, MD","dialString":"7147858093","id":"rch343"},{"display":"(909)837-5537","role":"Radiology, Interventional","name":"Daniel Jin, MD","id":"rch344","dialString":"9098375537"},{"id":"rch345","dialString":"2095567894","name":"Korylea Johnson, NP","display":"(209)556-7894","role":"APP - Nurse Practitioner"},{"name":"Jonathan Johnson, MD","display":"(347)756-1552","role":"Neurology - Clinical Neurophysiology","dialString":"3477561552","id":"rch346"},{"id":"rch347","dialString":"9519416946","display":"(951)941-6946","role":"APP - Certified Nurse Anesthetist","name":"Jerald Johnson II, CRNA"},{"name":"Anesha Jones, CRNA","role":"APP - Certified Nurse Anesthetist","display":"(770)330-7649","id":"rch348","dialString":"7703307649"},{"name":"Solomon Joshua, APRN, CNP, FNP","display":"(725)222-9022","role":"APP - Nurse Practitioner","id":"rch349","dialString":"7252229022"},{"id":"rch350","dialString":"9494051200","name":"Karis Joung, MD","role":"Pediatrics","display":"(949)405-1200"},{"name":"Timothy Jung, MD","display":"(951)544-5383","role":"Otolaryngology","dialString":"9515445383","id":"rch351"},{"dialString":"8582324346","id":"rch352","display":"(858)232-4346","role":"APP - Physician Assistant","name":"Ryan Junsay, PA-C"},{"dialString":"3198308969","id":"rch353","name":"Bilal Kaaki, MD","display":"(319)830-8969","role":"Obstetrics & Gynecology - Female Pelvic Medicine & Recon Sur"},{"id":"rch354","dialString":"8588228421","role":"Orthopaedic Surgery","display":"(858)822-8421","name":"Omar Kadri, MD"},{"role":"Obstetrics & Gynecology","display":"(213)219-9103","name":"Bente Kaiser, MD","id":"rch355","dialString":"2132199103"},{"role":"Neurological Surgery","display":"(310)469-4094","name":"Paul Kaloostian, MD","id":"rch356","dialString":"3104694094"},{"dialString":"8188360978","id":"rch357","name":"Sean Kaloostian, MD","role":"Neurological Surgery","display":"(818)836-0978"},{"id":"rch358","dialString":"2699108059","name":"Samer Kanaan, MD","role":"Thoracic & Cardiac Surgery","display":"(269)910-8059"},{"name":"Mohammad Kanakriyeh, MD","role":"Pediatrics - Pediatric Cardiology","display":"(909)222-8315","dialString":"9092228315","id":"rch359"},{"dialString":"6613132382","id":"rch360","role":"Neurology - Clinical Neurophysiology","display":"(661)313-2382","name":"Reza Kanani, MD"},{"dialString":"9516406784","id":"rch361","display":"(951)640-6784","role":"Family Medicine","name":"John Kane, MD"},{"display":"(951)808-7920","role":"Emergency Medicine","name":"Michael Kang, MD","id":"rch362","dialString":"9518087920"},{"name":"Ramesh Karody, MD","display":"(951)454-4889","role":"Internal Medicine - Critical Care Medicine","id":"rch363","dialString":"9514544889"},{"display":"(626)255-0919","role":"Obstetrics & Gynecology","name":"Samuel Kassar, MD","dialString":"6262550919","id":"rch364"},{"name":"Erin Katz, MD","display":"(727)667-4497","role":"Urology","dialString":"7276674497","id":"rch365"},{"id":"rch366","dialString":"9097096933","role":"Internal Medicine - Gastroenterology","display":"(909)709-6933","name":"Anas Kawayeh, MD"},{"role":"Internal Medicine - Gastroenterology","display":"(213)507-9261","name":"Zeid Kayali, MD","id":"rch367","dialString":"2135079261"},{"id":"rch368","dialString":"8583371309","role":"Internal Medicine","display":"(858)337-1309","name":"Mehdi Kazemi, MD"},{"display":"(951)312-6837","role":"Internal Medicine","name":"Kathleen Keating, DO","dialString":"9513126837","id":"rch369"},{"name":"Steven Kelley, MD","role":"Orthopaedic Surgery","display":"(909)754-0050","id":"rch370","dialString":"9097540050"},{"role":"Internal Medicine - Nephrology","display":"(951)206-0991","name":"Taher Khalil, MD","id":"rch371","dialString":"9512060991"},{"dialString":"3109224565","id":"rch372","role":"Orthopaedic Surgery","display":"(310)922-4565","name":"Babak Khamsi, MD"},{"dialString":"7147497903","id":"rch373","name":"Mohammed Khan, MD","role":"Internal Medicine - Nephrology","display":"(714)749-7903"},{"id":"rch374","dialString":"3107195921","name":"Ameera Khan, MD","role":"Internal Medicine","display":"(310)719-5921"},{"id":"rch375","dialString":"9095759481","display":"(909)575-9481","role":"Internal Medicine - Hematology","name":"Ziad Khan, MD"},{"dialString":"7142518058","id":"rch376","role":"Internal Medicine","display":"(714)251-8058","name":"Amal Khan, MD"},{"name":"Richard Khanal, MD","display":"(510)993-9011","role":"Internal Medicine","id":"rch377","dialString":"5109939011"},{"display":"(714)721-8721","role":"Internal Medicine","name":"Alia Khan-Hudson, MD","dialString":"7147218721","id":"rch378"},{"name":"Mohammad Kharazmi, MD","role":"Internal Medicine","display":"(949)324-2151","id":"rch379","dialString":"9493242151"},{"dialString":"7148534528","id":"rch380","name":"Mehri Khatibi, MD","display":"(714)853-4528","role":"Obstetrics & Gynecology"},{"id":"rch381","dialString":"9186887724","name":"Omar Khattab, MD","role":"Internal Medicine","display":"(918)688-7724"},{"name":"Stephanie Kidd, MD","display":"(909)855-0922","role":"Otolaryngology","dialString":"9098550922","id":"rch382"},{"id":"rch383","dialString":"3109916198","name":"Anna Kim, PA","display":"(310)991-6198","role":"APP - Physician Assistant"},{"id":"rch384","dialString":"9513238876","name":"Steven Kim, MD","role":"Emergency Medicine","display":"(951)323-8876"},{"dialString":"9513186351","id":"rch385","name":"Tommy Kim, MD","role":"Pediatrics - Pediatric Emergency Medicine","display":"(951)318-6351"},{"role":"Internal Medicine","display":"(323)350-9546","name":"Ook Kim, MD","id":"rch386","dialString":"3233509546"},{"id":"rch387","dialString":"3106006959","role":"Pathology - Anatomic/Clinical Pathology","display":"(310)600-6959","name":"Tae Hun Kim, MD"},{"dialString":"9519662379","id":"rch388","name":"Dong Kim, MD","display":"(951)966-2379","role":"Internal Medicine"},{"dialString":"5592834904","id":"rch389","role":"Anesthesiology","display":"(559)283-4904","name":"Robin Kim, MD"},{"id":"rch390","dialString":"5187287272","name":"Yohanan Kim, MD","role":"Otolaryngology","display":"(518)728-7272"},{"dialString":"6145581794","id":"rch391","name":"Uoo Kim, MD","display":"(614)558-1794","role":"Anesthesiology"},{"dialString":"9517823851","id":"rch392","role":"Obstetrics & Gynecology","display":"(951)782-3851","name":"John King, MD"},{"id":"rch393","dialString":"7023545431","display":"(702)354-5431","role":"APP - Certified Nurse Midwife","name":"Ciara Knerr, RN, NP, CNM"},{"name":"Kelsey Knight, CNM","display":"(214)552-4989","role":"APP - Certified Nurse Midwife","dialString":"2145524989","id":"rch394"},{"name":"Curtis Knight, MD","role":"Emergency Medicine","display":"(909)633-8772","id":"rch395","dialString":"9096338772"},{"name":"Sonja Knittel-Hliddal, MD","role":"Internal Medicine - Critical Care Medicine","display":"(323)308-8947","dialString":"3233088947","id":"rch396"},{"name":"Carl Knopke, MD","display":"(951)288-7899","role":"Family Medicine","dialString":"9512887899","id":"rch397"},{"dialString":"8312973236","id":"rch398","role":"Obstetrics & Gynecology","display":"(831)297-3236","name":"Karen Kohut, MD"},{"dialString":"9519908608","id":"rch399","display":"(951)990-8608","role":"Pediatrics","name":"Chulhwe Koo, MD"},{"id":"rch400","dialString":"8058956493","display":"(805)895-6493","role":"APP - Physician Assistant","name":"Marshall Koon, PA"},{"dialString":"6083352619","id":"rch401","name":"David Koslov, MD","display":"(608)335-2619","role":"Urology"},{"name":"Douglas Krahn, MD","role":"Surgery","display":"(951)543-5941","id":"rch402","dialString":"9515435941"},{"name":"Priya Krishna, MD","display":"(724)272-8484","role":"Otolaryngology","id":"rch403","dialString":"7242728484"},{"display":"(619)384-3329","role":"Plastic Surgery","name":"Joseph Ku, MD","dialString":"6193843329","id":"rch404"},{"name":"Scott Kubomoto, MD","display":"(310)871-8790","role":"Internal Medicine","dialString":"3108718790","id":"rch405"},{"role":"Family Medicine","display":"(951)768-7106","name":"Yanjapriya Kunaseelan, MD","dialString":"9517687106","id":"rch406"},{"role":"Pediatrics","display":"(951)202-1649","name":"Alan Kwasman, MD","id":"rch407","dialString":"9512021649"},{"role":"Radiology - Diagnostic","display":"(626)675-3501","name":"Scott Kwok, MD","id":"rch408","dialString":"6266753501"},{"id":"rch409","dialString":"9096477603","name":"Tony Kwon, MD","role":"Internal Medicine","display":"(909)647-7603"},{"name":"Wilson Kwong, MD","role":"Internal Medicine - Gastroenterology","display":"(713)398-4549","id":"rch410","dialString":"7133984549"},{"dialString":"9514270519","id":"rch411","display":"(951)427-0519","role":"Podiatric Surgery","name":"Nok Hang Lai, DPM"},{"id":"rch412","dialString":"5053405412","name":"Gowri Lakshminarayan, MD","role":"Neurology","display":"(505)340-5412"},{"id":"rch413","dialString":"3102189524","name":"Eduardo Lam, MD","display":"(310)218-9524","role":"Emergency Medicine"},{"role":"APP - Physician Assistant","display":"(951)809-2094","name":"Michael Lance, PA-C","id":"rch414","dialString":"9518092094"},{"name":"Walter Lapinskas, RN, NP","display":"(602)320-3097","role":"APP - Nurse Practitioner - Internal Medicine","id":"rch415","dialString":"6023203097"},{"display":"(951)201-6142","role":"Surgery","name":"Gustavo Lara, MD","id":"rch416","dialString":"9512016142"},{"name":"Yufei Lau, PA","display":"(909)816-1939","role":"APP - Physician Assistant","id":"rch417","dialString":"9098161939"},{"display":"(951)750-3471","role":"Internal Medicine - Pulmonary Disease","name":"Kam-Yung Lau, MD","dialString":"9517503471","id":"rch418"},{"dialString":"9518232048","id":"rch419","role":"Pediatrics - Neonatal-Perinatal Medicine","display":"(951)823-2048","name":"Adrian Lavery, MD"},{"id":"rch420","dialString":"7147578787","display":"(714)757-8787","role":"Obstetrics & Gynecology","name":"Thuan Le, MD"},{"role":"Anesthesiology","display":"(714)865-9616","name":"Andy Le, MD","dialString":"7148659616","id":"rch421"},{"dialString":"9162122703","id":"rch422","name":"Luat Nhan Le, DO","display":"(916)212-2703","role":"Obstetrics & Gynecology"},{"dialString":"9096337275","id":"rch423","name":"David LeBeau, MD","display":"(909)633-7275","role":"Radiology - Diagnostic"},{"id":"rch424","dialString":"2102699917","role":"Orthopaedic Surgery","display":"(210)269-9917","name":"Christopher LeBrun, MD"},{"id":"rch425","dialString":"7143199235","display":"(714)319-9235","role":"APP - Physician Assistant","name":"James Lee, PA"},{"dialString":"6269913127","id":"rch426","display":"(626)991-3127","role":"APP - Nurse Practitioner - Adult & Geriatric Medicine","name":"Michelle Lee, NP"},{"dialString":"9092760349","id":"rch427","name":"Alan Lee, MD","display":"(909)276-0349","role":"Pediatrics"},{"name":"Scott Lee, MD","display":"(909)735-1480","role":"Internal Medicine - Gastroenterology","dialString":"9097351480","id":"rch428"},{"id":"rch429","dialString":"9194522184","display":"(919)452-2184","role":"Otolaryngology","name":"Steve Lee, MD"},{"id":"rch430","dialString":"5628331831","name":"Eunice Lee, MD","display":"(562)833-1831","role":"Pediatrics"},{"display":"(951)809-6599","role":"Obstetrics & Gynecology","name":"Jay Lee, MD","id":"rch431","dialString":"9518096599"},{"name":"Aaron Lee, DO","role":"Surgery","display":"(903)240-2516","dialString":"9032402516","id":"rch432"},{"dialString":"9092949724","id":"rch433","name":"Vincent Lee, MD","display":"(909)294-9724","role":"Thoracic & Cardiac Surgery"},{"dialString":"7066768471","id":"rch434","display":"(706)676-8471","role":"Internal Medicine","name":"Vincent Lee, MD"},{"dialString":"3147497673","id":"rch435","name":"Tae Young Lee, MD","display":"(314)749-7673","role":"Surgery - Surgical Critical Care"},{"display":"(951)232-8837","role":"Pediatrics","name":"Ressia Lee, MD","dialString":"9512328837","id":"rch436"},{"display":"(914)275-6705","role":"Surgery","name":"Benjamin Leong, MD","dialString":"9142756705","id":"rch437"},{"id":"rch438","dialString":"9497356308","role":"APP - Physician Assistant","display":"(949)735-6308","name":"David Levine, PA-C"},{"name":"Albert Li, MD","display":"(951)231-3976","role":"Internal Medicine","dialString":"9512313976","id":"rch439"},{"name":"Peter Liao, MD","role":"Internal Medicine","display":"(603)566-7152","dialString":"6035667152","id":"rch440"},{"display":"(714)683-3946","role":"Surgery","name":"Christina Lien, DO","id":"rch441","dialString":"7146833946"},{"dialString":"9096310653","id":"rch442","name":"Jennifer Lievanos, PA","role":"APP - Physician Assistant","display":"(909)631-0653"},{"name":"Catrissa Lightfoot-Siordia, MD","display":"(310)547-7291","role":"Anesthesiology","id":"rch443","dialString":"3105477291"},{"name":"Tom Lin, MD","display":"(253)209-2425","role":"Surgery","id":"rch444","dialString":"2532092425"},{"id":"rch445","dialString":"7143967809","display":"(714)396-7809","role":"APP - Physician Assistant","name":"Lara Lingwall-Overstreet, PA-C"},{"id":"rch446","dialString":"9517767567","name":"Johnny Liquete, MD","display":"(951)776-7567","role":"Internal Medicine - Infectious Disease"},{"id":"rch447","dialString":"6263538787","name":"Pei Liu, MD","display":"(626)353-8787","role":"Neurology"},{"role":"Family Medicine","display":"(951)902-7216","name":"Winson Liu, MD","dialString":"9519027216","id":"rch448"},{"dialString":"9096487801","id":"rch449","role":"Internal Medicine","display":"(909)648-7801","name":"Wesley Livingston, DO"},{"dialString":"9099083780","id":"rch450","name":"Munish Loomba, MD","role":"Anesthesiology - Pain Medicine","display":"(909)908-3780"},{"role":"Urology","display":"(914)500-5197","name":"Brandon Louie, MD","dialString":"9145005197","id":"rch451"},{"role":"Emergency Medicine","display":"(408)655-7485","name":"Michael Louthan, MD","dialString":"4086557485","id":"rch452"},{"display":"(303)913-7135","role":"Anesthesiology","name":"Patricia Lowery, DO","id":"rch453","dialString":"3039137135"},{"role":"APP - Certified Nurse Anesthetist","display":"(909)630-8038","name":"Vi Ly, CRNA","id":"rch454","dialString":"9096308038"},{"id":"rch455","dialString":"6309354968","name":"Ramneek Maan, MD","display":"(630)935-4968","role":"Anesthesiology"},{"display":"(949)400-3769","role":"APP - Physician Assistant - Orthopaedic Surgery","name":"Melissa Machuca, PA-C","id":"rch456","dialString":"9494003769"},{"name":"Timothy Mackey, MD","display":"(951)313-6519","role":"Pediatrics","dialString":"9513136519","id":"rch457"},{"dialString":"3109631613","id":"rch458","role":"Emergency Medicine","display":"(310)963-1613","name":"Edward Magee, MD"},{"dialString":"4438459519","id":"rch459","name":"Vijay Maggio, MD","role":"Neurology - Clinical Neurophysiology","display":"(443)845-9519"},{"display":"(909)957-2952","role":"Obstetrics & Gynecology","name":"Leila Magistrado, MD","id":"rch460","dialString":"9099572952"},{"role":"APP - Nurse Practitioner - Family Medicine","display":"(951)394-7028","name":"Charisse Magsaysay, APRN","id":"rch461","dialString":"9513947028"},{"display":"(951)233-7839","role":"Family Medicine","name":"Tarek Mahdi, MD","dialString":"9512337839","id":"rch462"},{"id":"rch463","dialString":"9165791978","display":"(916)579-1978","role":"Internal Medicine","name":"Ali Mahdi, MD"},{"dialString":"9515386169","id":"rch464","display":"(951)538-6169","role":"Internal Medicine - Pulmonary Disease","name":"Anoop Maheshwari, MD"},{"id":"rch465","dialString":"9499337862","role":"Orthopaedic Surgery","display":"(949)933-7862","name":"Michael Mai, MD"},{"name":"Martin Majer, MD","role":"Internal Medicine - Hematology","display":"(424)237-4097","dialString":"4242374097","id":"rch466"},{"dialString":"9498787935","id":"rch467","role":"Internal Medicine - Pulmonary Disease","display":"(949)878-7935","name":"Mohammad Malekzadegan, MD"},{"dialString":"7025018542","id":"rch468","display":"(702)501-8542","role":"Internal Medicine - Infectious Disease","name":"Sudhakar Mallela, MD"},{"role":"Obstetrics & Gynecology","display":"(714)396-6123","name":"Nilima Mamtora, MD","dialString":"7143966123","id":"rch469"},{"dialString":"7608313313","id":"rch470","display":"(760)831-3313","role":"Internal Medicine - Neurocritical Care","name":"Conrad Manning, DO"},{"id":"rch471","dialString":"3617650798","name":"Nadin Mansour, MD","display":"(361)765-0798","role":"Pediatrics"},{"role":"Ophthalmology","display":"(818)640-9886","name":"Ahmad Mansury, MD","id":"rch472","dialString":"8186409886"},{"id":"rch473","dialString":"3109086890","name":"Mehdi Manzari, MD","display":"(310)908-6890","role":"Internal Medicine"},{"dialString":"5623091656","id":"rch474","name":"James Mar, DO","role":"Internal Medicine","display":"(562)309-1656"},{"name":"Hilario Marilao, MD","role":"Pediatrics - Pediatric Cardiology","display":"(951)218-4956","dialString":"9512184956","id":"rch475"},{"role":"Surgery","display":"(626)644-3283","name":"David Martin, MD","dialString":"6266443283","id":"rch476"},{"id":"rch477","dialString":"9515330267","role":"Pediatrics - Neonatal-Perinatal Medicine","display":"(951)533-0267","name":"Louis Martincheck, MD"},{"dialString":"9092784593","id":"rch478","name":"Ala Masri, MD","display":"(909)278-4593","role":"Internal Medicine"},{"role":"Internal Medicine","display":"(773)814-8200","name":"Mousa Matar, MD","id":"rch479","dialString":"7738148200"},{"dialString":"2027169040","id":"rch480","name":"Anne Maxwell, MD","role":"Otolaryngology","display":"(202)716-9040"},{"name":"Galen Maze-Rothstein, MD","role":"Neurology","display":"(617)448-7280","id":"rch481","dialString":"6174487280"},{"name":"Helena Mba, MD","display":"(310)462-0181","role":"Obstetrics & Gynecology","dialString":"3104620181","id":"rch482"},{"id":"rch483","dialString":"7606680515","name":"Andrew McCague, DO","role":"Surgery - Surgical Critical Care","display":"(760)668-0515"},{"role":"Emergency Medicine","display":"(419)377-7572","name":"Emily McClain, MD","dialString":"4193777572","id":"rch484"},{"dialString":"9515447351","id":"rch485","name":"Erin McIntosh, NP","role":"APP - Nurse Practitioner - Pulmonary Disease","display":"(951)544-7351"},{"id":"rch486","dialString":"7143818834","name":"Cristiaan Medina, NP","role":"APP - Nurse Practitioner - Family Medicine","display":"(714)381-8834"},{"dialString":"8478942283","id":"rch487","role":"Internal Medicine - Pulmonary Disease","display":"(847)894-2283","name":"Anita Mehta, MD"},{"display":"(607)237-6655","role":"Internal Medicine - Pulmonary Disease","name":"Liliana Mendoza, DO","dialString":"6072376655","id":"rch488"},{"dialString":"9165219743","id":"rch489","display":"(916)521-9743","role":"Internal Medicine - Clinical Cardiac Electrophysiology","name":"Bradley Messenger, MD"},{"display":"(253)861-2956","role":"Neurology","name":"Nicholas Meyers, MD","id":"rch490","dialString":"2538612956"},{"name":"Mina Mikhail, MD","display":"(951)454-3946","role":"Internal Medicine","dialString":"9514543946","id":"rch491"},{"role":"Internal Medicine","display":"(562)896-0905","name":"Christine Mikhail, MD","id":"rch492","dialString":"5628960905"},{"dialString":"5623551918","id":"rch493","name":"Sameh Mikhail, MD","role":"Family Medicine","display":"(562)355-1918"},{"dialString":"7602652384","id":"rch494","display":"(760)265-2384","role":"Neurological Surgery","name":"Tanya Minasian, DO"},{"name":"Adnan Misellati, MD","role":"Family Medicine","display":"(541)912-9551","id":"rch495","dialString":"5419129551"},{"dialString":"9517430719","id":"rch496","role":"Internal Medicine - Gastroenterology","display":"(951)743-0719","name":"Vinod Mishra, MD"},{"id":"rch497","dialString":"7146054557","name":"Yasser Mohamed Omar, MD","display":"(714)605-4557","role":"Internal Medicine - Critical Care Medicine"},{"id":"rch498","dialString":"9494459050","name":"Ali Mojaverian, MD","role":"Internal Medicine - Pulmonary Disease","display":"(949)445-9050"},{"name":"Sudha Moola, MD","display":"(951)214-5005","role":"Obstetrics & Gynecology","dialString":"9512145005","id":"rch499"},{"id":"rch500","dialString":"3867483015","name":"Patrick Moran, CRNA","role":"APP - Certified Nurse Anesthetist","display":"(386)748-3015"},{"name":"Elizabeth Morrison-Banks, MD, MSEd","display":"(213)258-6221","role":"Neurology","id":"rch501","dialString":"2132586221"},{"dialString":"7148018878","id":"rch502","display":"(714)801-8878","role":"Radiology - Diagnostic","name":"Michael Mousa, MD"},{"name":"Katherine Mower, DO","role":"Internal Medicine","display":"(408)621-3360","id":"rch503","dialString":"4086213360"},{"id":"rch504","dialString":"4012612380","name":"Hoveda Mufti, MD","role":"Internal Medicine","display":"(401)261-2380"},{"dialString":"9092418803","id":"rch505","name":"Ashis Mukherjee, MD","role":"Internal Medicine - Cardiovascular Disease","display":"(909)241-8803"},{"name":"Sheila Mulligan, MD","role":"Obstetrics & Gynecology","display":"(858)699-0944","dialString":"8586990944","id":"rch506"},{"display":"(909)755-5580","role":"Family Medicine","name":"Mazen Munir, MD","id":"rch507","dialString":"9097555580"},{"dialString":"8573641310","id":"rch508","name":"Heghine Muradyan, MD","display":"(857)364-1310","role":"Family Medicine"},{"name":"Jeffrey Murray, CRNA","role":"APP - Certified Nurse Anesthetist","display":"(609)792-7492","dialString":"6097927492","id":"rch509"},{"dialString":"4254040966","id":"rch510","name":"Hemalatha Murugan, MD","display":"(425)404-0966","role":"Family Medicine"},{"id":"rch511","dialString":"9516829780","display":"(951)682-9780","role":"Pediatrics","name":"Monika Mustafa, MD"},{"dialString":"9095102097","id":"rch512","name":"Faize Mustafa, MD","role":"Pediatrics","display":"(909)510-2097"},{"role":"APP - Nurse Practitioner","display":"(909)609-8541","name":"Sherri Myung, NP","id":"rch513","dialString":"9096098541"},{"id":"rch514","dialString":"9519903934","name":"Subbu Nagappan, MD","display":"(951)990-3934","role":"Surgery"},{"role":"Neurology","display":"(214)422-0455","name":"Venkatesh Nagaraddi, MD","id":"rch515","dialString":"2144220455"},{"name":"Omar Nagy, DO","display":"(714)200-9585","role":"Internal Medicine","dialString":"7142009585","id":"rch516"},{"name":"Samar Nahas, MD","role":"Obstetrics & Gynecology - Gynecologic Oncology","display":"(714)803-2076","id":"rch517","dialString":"7148032076"},{"id":"rch518","dialString":"9517517705","role":"Internal Medicine - Infectious Disease","display":"(951)751-7705","name":"Tejaskumar Naik, MD"},{"id":"rch519","dialString":"4129928159","name":"Honesty Nam, MD","role":"Internal Medicine","display":"(412)992-8159"},{"id":"rch520","dialString":"9096433447","name":"Syed Naqvi, MD","role":"Internal Medicine","display":"(909)643-3447"},{"dialString":"5623438014","id":"rch521","role":"Vascular Surgery","display":"(562)343-8014","name":"Vincent Reginald Narvaez, MD"},{"name":"Ankit Nayyar, MD","role":"Neurology","display":"(818)384-6223","id":"rch522","dialString":"8183846223"},{"role":"Neurology","display":"(559)960-2072","name":"James Nelson, MD","dialString":"5599602072","id":"rch523"},{"name":"Daniel Ng, MD","role":"Emergency Medicine","display":"(805)440-7386","id":"rch524","dialString":"8054407386"},{"name":"An Tam Nguyen, PA","role":"APP - Physician Assistant","display":"(909)520-4710","dialString":"9095204710","id":"rch525"},{"id":"rch526","dialString":"5042107538","display":"(504)210-7538","role":"APP - Certified Nurse Anesthetist","name":"Anthony Nguyen, CRNA"},{"id":"rch527","dialString":"7147027725","name":"Hoa Nguyen, CRNA","display":"(714)702-7725","role":"APP - Certified Nurse Anesthetist"},{"role":"APP - Physician Assistant - Cardiology","display":"(951)892-4858","name":"Chau Nguyen, PA","dialString":"9518924858","id":"rch528"},{"name":"Anlanh-Jennifer Nguyen, PA-C","display":"(909)538-9052","role":"APP - Physician Assistant - Thoracic & Cardiac Surgery","dialString":"9095389052","id":"rch529"},{"display":"(626)927-6617","role":"Pediatrics","name":"Anthony Nguyen, MD","dialString":"6269276617","id":"rch530"},{"name":"Derek Nguyen, MD","role":"Internal Medicine","display":"(951)367-7721","dialString":"9513677721","id":"rch531"},{"dialString":"9514330654","id":"rch532","role":"Plastic Surgery","display":"(951)433-0654","name":"Trung Nguyen, MD"},{"id":"rch533","dialString":"7146753937","name":"Hai Nguyen, MD","display":"(714)675-3937","role":"Internal Medicine"},{"id":"rch534","dialString":"9516341150","name":"Son Nguyen, MD","role":"Obstetrics & Gynecology","display":"(951)634-1150"},{"name":"Khanh Nguyen, MD","display":"(714)930-6293","role":"Otolaryngology","dialString":"7149306293","id":"rch535"},{"dialString":"7143361850","id":"rch536","name":"Michael Nguyen, DO","display":"(714)336-1850","role":"Internal Medicine"},{"role":"Dermatology","display":"(951)233-1899","name":"Ethan-Quan Nguyen, MD","dialString":"9512331899","id":"rch537"},{"dialString":"7145889709","id":"rch538","name":"Viet Nguyen, MD","role":"Emergency Medicine","display":"(714)588-9709"},{"name":"Shoko Nitta, NP","display":"(310)809-0334","role":"APP - Nurse Practitioner","id":"rch539","dialString":"3108090334"},{"dialString":"8016388298","id":"rch540","name":"Kevyn Niu, DO","role":"Internal Medicine","display":"(801)638-8298"},{"display":"(612)210-6538","role":"Neurology - Clinical Neurophysiology","name":"Shani Norberg, MD","id":"rch541","dialString":"6122106538"},{"role":"Surgery","display":"(951)288-5163","name":"Harvey Nurick, MD","id":"rch542","dialString":"9512885163"},{"role":"Obstetrics & Gynecology","display":"(424)303-3780","name":"Shawanda Obey, MD","id":"rch543","dialString":"4243033780"},{"dialString":"9512011332","id":"rch544","name":"Alonso Ojeda, MD","display":"(951)201-1332","role":"Obstetrics & Gynecology"},{"name":"Linda Olson, NP","display":"(760)567-1990","role":"APP - Nurse Practitioner","id":"rch545","dialString":"7605671990"},{"id":"rch546","dialString":"4807077226","display":"(480)707-7226","role":"Otolaryngology","name":"Caitlin Olson, MD"},{"id":"rch547","dialString":"6307282298","role":"Obstetrics & Gynecology","display":"(630)728-2298","name":"Tochukwu Onyekwuluje, MD"},{"dialString":"9092409549","id":"rch548","name":"Ronald Ortizo, MD","display":"(909)240-9549","role":"Internal Medicine - Gastroenterology"},{"role":"Family Medicine","display":"(718)840-9994","name":"Ryan Ortizo, MD","dialString":"7188409994","id":"rch549"},{"dialString":"5627531199","id":"rch550","role":"APP - Physician Assistant - Emergency Medicine","display":"(562)753-1199","name":"Kyle Oscarson, PA-C"},{"role":"Internal Medicine - Critical Care Medicine","display":"(310)689-8456","name":"Sahar Osman, MD","dialString":"3106898456","id":"rch551"},{"dialString":"7023546950","id":"rch552","display":"(702)354-6950","role":"Internal Medicine","name":"Melissa Jael Osorio, DO"},{"id":"rch553","dialString":"7025268055","role":"APP - Nurse Practitioner","display":"(702)526-8055","name":"Kelly Owen, NP"},{"dialString":"9513128226","id":"rch554","display":"(951)312-8226","role":"Ophthalmology","name":"Francisco Pabalan, MD"},{"dialString":"3055056398","id":"rch555","name":"Marco Paez, MD","role":"Internal Medicine - Gastroenterology","display":"(305)505-6398"},{"role":"Ophthalmology","display":"(317)332-5937","name":"Angelita Palanca-Capistrano, MD","dialString":"3173325937","id":"rch556"},{"dialString":"3106194713","id":"rch557","name":"Bea Palileo, MD","role":"Ophthalmology","display":"(310)619-4713"},{"dialString":"9512273672","id":"rch558","display":"(951)227-3672","role":"Pediatrics","name":"Aruna Pallapati, MD"},{"display":"(951)965-6202","role":"APP - Certified Nurse Anesthetist","name":"Carlos Palomares, CRNA","id":"rch559","dialString":"9519656202"},{"name":"Jaibir Pannu, MD","display":"(541)517-0881","role":"Otolaryngology","id":"rch560","dialString":"5415170881"},{"id":"rch561","dialString":"9173647839","role":"Orthopaedic Surgery","display":"(917)364-7839","name":"Christina Pantazopoulos, DO"},{"name":"Hardik Parikh, MD","role":"Physical Medicine & Rehabilitation","display":"(310)597-1883","id":"rch562","dialString":"3105971883"},{"dialString":"3238426191","id":"rch563","display":"(323)842-6191","role":"APP - Certified Nurse Anesthetist","name":"Matthew Park, CRNA"},{"dialString":"4082503821","id":"rch564","display":"(408)250-3821","role":"Internal Medicine","name":"Iris Partovi, MD"},{"id":"rch565","dialString":"9095765555","name":"Rod Partow-Navid, MD","role":"Electrophysiology","display":"(909)576-5555"},{"dialString":"9513452142","id":"rch566","name":"Desiree Pasillas, PA","display":"(951)345-2142","role":"APP - Physician Assistant"},{"dialString":"9514542647","id":"rch567","display":"(951)454-2647","role":"Internal Medicine - Cardiovascular Disease","name":"Kaustubh Patankar, MD"},{"display":"(951)892-8448","role":"Internal Medicine","name":"Sharmila Patel, MD","dialString":"9518928448","id":"rch568"},{"name":"Payal Patel, MD","role":"Pediatrics - Pediatric Cardiology","display":"(909)717-6268","id":"rch569","dialString":"9097176268"},{"id":"rch570","dialString":"6312415617","name":"Garvin Patel, MD","display":"(631)241-5617","role":"Internal Medicine"},{"dialString":"9092412195","id":"rch571","role":"Family Medicine","display":"(909)241-2195","name":"Calvin Patel, MD"},{"role":"Internal Medicine - Gastroenterology","display":"(951)941-7699","name":"Yogendra Patel, MD","id":"rch572","dialString":"9519417699"},{"role":"Family Medicine","display":"(951)333-4463","name":"Anesh Patel, MD","dialString":"9513334463","id":"rch573"},{"name":"Akash Patel, MD","display":"(865)247-9934","role":"Internal Medicine","id":"rch574","dialString":"8652479934"},{"dialString":"9512335606","id":"rch575","role":"Emergency Medicine","display":"(951)233-5606","name":"Stephen Patterson, MD"},{"name":"Daniel Patton, MD","display":"(206)707-6072","role":"Orthopaedic Surgery","dialString":"2067076072","id":"rch576"},{"name":"Jenniflor Paulo, NP","role":"APP - Nurse Practitioner","display":"(626)260-6790","id":"rch577","dialString":"6262606790"},{"id":"rch578","dialString":"6192772405","name":"Riva Paulos, APRN, CRNA","display":"(619)277-2405","role":"APP - Certified Nurse Anesthetist"},{"role":"Internal Medicine","display":"(951)500-0388","name":"Joel Pengson, MD","id":"rch579","dialString":"9515000388"},{"id":"rch580","dialString":"4142328588","role":"Obstetrics & Gynecology","display":"(414)232-8588","name":"Albert Penney, MD"},{"display":"(310)902-2221","role":"Surgery","name":"Martin Perez, MD","id":"rch581","dialString":"3109022221"},{"dialString":"7875021364","id":"rch582","name":"Hector Perez, MD","display":"(787)502-1364","role":"Otolaryngology"},{"name":"Jon Persichino, DO","role":"Internal Medicine - Infectious Disease","display":"(909)289-0838","dialString":"9092890838","id":"rch583"},{"dialString":"5083695413","id":"rch584","name":"Matthew Peterkin, CRNA","role":"APP - Certified Nurse Anesthetist","display":"(508)369-5413"},{"role":"APP - Certified Nurse Anesthetist","display":"(619)730-5534","name":"Neal Petersen, CRNA","dialString":"6197305534","id":"rch585"},{"dialString":"3174325771","id":"rch586","display":"(317)432-5771","role":"Neurological Surgery","name":"Catherine Peterson, MD"},{"dialString":"2817936650","id":"rch587","role":"Internal Medicine - Pulmonary Disease","display":"(281)793-6650","name":"Jessica Petty, DO"},{"role":"Internal Medicine - Gastroenterology","display":"(714)725-4918","name":"Thu Pham, MD","dialString":"7147254918","id":"rch588"},{"role":"Pediatrics","display":"(310)339-9028","name":"Roberta Pickett, MD","id":"rch589","dialString":"3103399028"},{"dialString":"5622253822","id":"rch590","role":"Obstetrics & Gynecology","display":"(562)225-3822","name":"John Pinches III, DO"},{"name":"David Plurad, MD","role":"Surgery - Surgical Critical Care","display":"(626)696-9992","dialString":"6266969992","id":"rch591"},{"display":"(914)310-4551","role":"Internal Medicine - Hematology","name":"Rahul Dev Polineni, MD","dialString":"9143104551","id":"rch592"},{"dialString":"4145269844","id":"rch593","role":"Pediatrics","display":"(414)526-9844","name":"Sasidharan Ponthenkandath, MD"},{"dialString":"8584423773","id":"rch594","name":"Alina Popa, MD","display":"(858)442-3773","role":"Internal Medicine"},{"role":"Internal Medicine","display":"(858)442-5369","name":"Remus Popa, MD","id":"rch595","dialString":"8584425369"},{"name":"Jacob Porter, DO","role":"Pediatrics","display":"(918)500-9661","id":"rch596","dialString":"9185009661"},{"name":"Mohammad Pour, MD","role":"Internal Medicine","display":"(913)222-9325","dialString":"9132229325","id":"rch597"},{"name":"Ganesh Prasad, MD","role":"Anesthesiology","display":"(559)709-5999","id":"rch598","dialString":"5597095999"},{"dialString":"9518527653","id":"rch599","role":"Obstetrics & Gynecology","display":"(951)852-7653","name":"Jennifer Prestifilippo, DO"},{"dialString":"7148783551","id":"rch600","name":"James Pugeda, MD","role":"Anesthesiology","display":"(714)878-3551"},{"role":"APP - Certified Nurse Midwife","display":"(949)697-7442","name":"Cynthia Pulsha, CNM","dialString":"9496977442","id":"rch601"},{"role":"Family Medicine","display":"(248)982-6347","name":"Sanjeev Puri, DO","id":"rch602","dialString":"2489826347"},{"name":"Farnoosh Qadri, MD","role":"Obstetrics & Gynecology","display":"(504)812-7548","id":"rch603","dialString":"5048127548"},{"dialString":"9513138866","id":"rch604","name":"Shadi Qasqas, MD","role":"Internal Medicine - Cardiovascular Disease","display":"(951)313-8866"},{"name":"Joseph Quan, MD","display":"(951)236-0346","role":"Internal Medicine - Cardiovascular Disease","id":"rch605","dialString":"9512360346"},{"dialString":"7149046845","id":"rch606","name":"Assad Qureshi, MD","display":"(714)904-6845","role":"Internal Medicine"},{"id":"rch607","dialString":"3108939026","role":"Internal Medicine - Gastroenterology","display":"(310)893-9026","name":"Poneh Rahimi, MD"},{"name":"Sohrab Rahimi Naini, MD","role":"Internal Medicine - Gastroenterology","display":"(832)683-3450","dialString":"8326833450","id":"rch608"},{"name":"Arash Rahimi-Ardabily, MD","display":"(916)201-9526","role":"General Surgery","dialString":"9162019526","id":"rch609"},{"id":"rch610","dialString":"9515383335","display":"(951)538-3335","role":"Neurology","name":"Baldev Rai, MD"},{"dialString":"9492740284","id":"rch611","name":"Karandev Rai, MD","display":"(949)274-0284","role":"Neurology"},{"id":"rch612","dialString":"6026946188","name":"Ashwin Ram, MD","role":"Pediatrics - Neonatal-Perinatal Medicine","display":"(602)694-6188"},{"id":"rch613","dialString":"9196562053","display":"(919)656-2053","role":"Psychiatry","name":"Gowri Ramachandran, MD"},{"dialString":"5026482925","id":"rch614","role":"Internal Medicine - Critical Care Medicine","display":"(502)648-2925","name":"Sunil Ramaswamy, MD"},{"name":"Joe Ramirez-Lopez, PA-C","role":"APP - Physician Assistant - Orthopaedic Surgery","display":"(714)883-4468","dialString":"7148834468","id":"rch615"},{"display":"(718)578-7936","role":"Internal Medicine","name":"Humera Rana, MD","id":"rch616","dialString":"7185787936"},{"dialString":"7144966650","id":"rch617","display":"(714)496-6650","role":"Family Medicine","name":"Malini Ranat, MD"},{"name":"Anas Raowas, MD","display":"(832)315-7120","role":"Internal Medicine - Hematology","dialString":"8323157120","id":"rch618"},{"dialString":"3102108567","id":"rch619","display":"(310)210-8567","role":"Anesthesiology","name":"Eugene Rapaport, MD"},{"dialString":"3107038651","id":"rch620","display":"(310)703-8651","role":"Radiology - Radiation Oncology","name":"Afshin Rashtian, MD"},{"dialString":"9513068059","id":"rch621","role":"Internal Medicine - Cardiovascular Disease","display":"(951)306-8059","name":"Anisha Rastogi, MD"},{"role":"Internal Medicine","display":"(810)877-1187","name":"Bilal Rayes, MD","id":"rch622","dialString":"8108771187"},{"name":"Tania Raygoza, MD","display":"(951)581-0729","role":"Pediatrics","dialString":"9515810729","id":"rch623"},{"dialString":"9177978699","id":"rch624","name":"Adnan Raza, MD","role":"Internal Medicine - Clinical Cardiac Electrophysiology","display":"(917)797-8699"},{"role":"Obstetrics & Gynecology","display":"(951)824-0189","name":"Rodolfo Rey, MD","id":"rch625","dialString":"9518240189"},{"display":"(714)797-1233","role":"Anesthesiology","name":"Rodd Rezvani, MD","id":"rch626","dialString":"7147971233"},{"id":"rch627","dialString":"5622543133","role":"Internal Medicine","display":"(562)254-3133","name":"Terence Rhone, DO"},{"id":"rch628","dialString":"8085898487","name":"Tanawan Riangwiwat, MD","role":"Cardiology","display":"(808)589-8487"},{"id":"rch629","dialString":"7854107284","name":"Amy Rieschick, CRNA","role":"APP - Certified Nurse Anesthetist","display":"(785)410-7284"},{"name":"Laura Rigby, NP","display":"(951)818-0227","role":"APP - Nurse Practitioner","dialString":"9518180227","id":"rch630"},{"role":"Internal Medicine","display":"(415)205-1793","name":"Matthew Riley, DO","id":"rch631","dialString":"4152051793"},{"dialString":"9495919303","id":"rch632","display":"(949)591-9303","role":"Family Medicine","name":"Greta Rios-Steed, MD"},{"name":"Natalie Rivera, MD","role":"Obstetrics & Gynecology","display":"(562)822-3185","dialString":"5628223185","id":"rch633"},{"name":"Andrew Rives, PA","display":"(951)743-4364","role":"APP - Physician Assistant","dialString":"9517434364","id":"rch634"},{"id":"rch635","dialString":"9515268985","name":"Adam Robarge, MD","role":"Internal Medicine","display":"(951)526-8985"},{"id":"rch636","dialString":"2489241280","name":"Matthew Robinson, DO","role":"Orthopaedic Surgery","display":"(248)924-1280"},{"dialString":"9519013246","id":"rch637","display":"(951)901-3246","role":"APP - Nurse Practitioner - Adult & Geriatric Medicine","name":"Rose Mary Rodrigues, NP"},{"display":"(915)996-4670","role":"Internal Medicine - Pulmonary Disease","name":"Carlos Rodriguez Castro, MD","dialString":"9159964670","id":"rch638"},{"id":"rch639","dialString":"7173953920","display":"(717)395-3920","role":"Orthopaedic Surgery","name":"Reza Roghani, MD"},{"name":"Diana Romo, PA","display":"(909)489-0518","role":"APP - Physician Assistant","dialString":"9094890518","id":"rch640"},{"dialString":"9092234607","id":"rch641","name":"Brenda Ross, MD","role":"Obstetrics & Gynecology - Maternal and Fetal Medicine","display":"(909)223-4607"},{"name":"Mark Ross, MD","display":"(480)455-8846","role":"Neurology - Clinical Neurophysiology","dialString":"4804558846","id":"rch642"},{"dialString":"9512170160","id":"rch643","display":"(951)217-0160","role":"Orthopaedic Surgery","name":"David Ruckle, MD"},{"dialString":"9513232797","id":"rch644","name":"Lieu Rupp, MD","display":"(951)323-2797","role":"Family Medicine"},{"dialString":"9098353314","id":"rch645","name":"James Ruppert, MD","display":"(909)835-3314","role":"Family Medicine"},{"id":"rch646","dialString":"7078495829","name":"Gregory Sacher, MD","display":"(707)849-5829","role":"Obstetrics & Gynecology"},{"id":"rch647","dialString":"9513343869","name":"Rodolfo Saenz, MD","role":"Obstetrics & Gynecology","display":"(951)334-3869"},{"id":"rch648","dialString":"9515059779","role":"Pediatrics - Neonatal-Perinatal Medicine","display":"(951)505-9779","name":"Daniel Saesim, MD"},{"dialString":"3478863725","id":"rch649","name":"Nikhil Sahasrabudhe, MD","role":"Neurological Surgery","display":"(347)886-3725"},{"dialString":"9515290881","id":"rch650","display":"(951)529-0881","role":"Internal Medicine","name":"Vikram Sahay, DO"},{"name":"Michael Saito, MD","role":"Pediatrics","display":"(951)901-9857","id":"rch651","dialString":"9519019857"},{"id":"rch652","dialString":"9098356725","display":"(909)835-6725","role":"APP - Physician Assistant - Cardiology","name":"Kelly Salazar, PA"},{"id":"rch653","dialString":"9515335011","name":"Alma Salazar, MD","role":"Pediatrics","display":"(951)533-5011"},{"dialString":"9515339601","id":"rch654","role":"Obstetrics & Gynecology","display":"(951)533-9601","name":"Serafin Salazar, MD"},{"role":"APP - Nurse Practitioner","display":"(661)860-5788","name":"Regine Vielka Salcedo, NP","id":"rch655","dialString":"6618605788"},{"role":"Plastic Surgery","display":"(310)266-1211","name":"Samuel Salcedo, MD","id":"rch656","dialString":"3102661211"},{"id":"rch657","dialString":"3124045440","name":"Suhail Salem, MD","display":"(312)404-5440","role":"Internal Medicine - Gastroenterology"},{"name":"Steven Salzman, MD","display":"(951)522-8172","role":"Family Medicine","dialString":"9515228172","id":"rch658"},{"id":"rch659","dialString":"7183097578","role":"Psychiatry","display":"(718)309-7578","name":"Ali Samee, MD"},{"role":"Pediatrics","display":"(909)900-9739","name":"Alexis Sandoval, DO","dialString":"9099009739","id":"rch660"},{"name":"Sandeep Sangodkar, DO","role":"Internal Medicine - Cardiovascular Disease","display":"(714)606-6345","id":"rch661","dialString":"7146066345"},{"role":"Obstetrics & Gynecology","display":"(951)333-1101","name":"Paulus Santoso, MD","id":"rch662","dialString":"9513331101"},{"dialString":"7602850465","id":"rch663","display":"(760)285-0465","role":"APP - Certified Nurse Anesthetist","name":"Sandee Sapien, CRNA"},{"dialString":"4243996024","id":"rch664","name":"Shahruq Sarela, MD","display":"(424)399-6024","role":"Internal Medicine"},{"role":"Internal Medicine - Interventional Cardiology","display":"(650)417-8598","name":"Javad Savoj, MD","id":"rch665","dialString":"6504178598"},{"dialString":"9093636278","id":"rch666","name":"Danielle Sawyer Macknet, MD","display":"(909)363-6278","role":"Obstetrics & Gynecology"},{"id":"rch667","dialString":"2142358756","name":"Raheel Sayed, MD","display":"(214)235-8756","role":"Internal Medicine"},{"role":"Orthopaedic Surgery","display":"(951)858-9618","name":"Aatif Sayeed, MD","dialString":"9518589618","id":"rch668"},{"role":"Internal Medicine - Pulmonary Disease","display":"(951)254-3339","name":"Martin Schlusselberg, MD","id":"rch669","dialString":"9512543339"},{"role":"Family Medicine","display":"(951)313-9100","name":"Joseph Schneider, MD","id":"rch670","dialString":"9513139100"},{"name":"Benjamen Schoenberg, MD","display":"(909)477-7793","role":"Emergency Medicine","id":"rch671","dialString":"9094777793"},{"dialString":"9516622360","id":"rch672","display":"(951)662-2360","role":"Pediatrics","name":"Stanley Schwartz, MD"},{"display":"(919)902-0556","role":"APP - Certified Nurse Anesthetist","name":"Albert Scott, CRNA","id":"rch673","dialString":"9199020556"},{"dialString":"9096594651","id":"rch674","name":"Rebecca Scull, CNM","display":"(909)659-4651","role":"APP - Certified Nurse Midwife"},{"name":"Christopher Seaman, MD","display":"(415)847-4106","role":"Internal Medicine - Cardiovascular Disease","dialString":"4158474106","id":"rch675"},{"id":"rch676","dialString":"9515365748","role":"Obstetrics & Gynecology","display":"(951)536-5748","name":"Sissi Selinger, DO"},{"dialString":"4193469777","id":"rch677","name":"Hassan Semaan, MD","display":"(419)346-9777","role":"Radiology - Diagnostic"},{"id":"rch678","dialString":"9095688332","role":"Radiology - Therapeutic","display":"(909)568-8332","name":"Neena Shah, MD"},{"display":"(310)612-3122","role":"Internal Medicine - Nephrology","name":"Tariq Shah, MD","dialString":"3106123122","id":"rch679"},{"name":"Akash Shah, MD","role":"Orthopaedic Surgery","display":"(845)702-8444","dialString":"8457028444","id":"rch680"},{"dialString":"8609971234","id":"rch681","name":"Omar Shahbaz, MD","role":"Internal Medicine - Gastroenterology","display":"(860)997-1234"},{"id":"rch682","dialString":"8583493846","name":"Heena Shah-Patel, MD","display":"(858)349-3846","role":"Allergy and Immunology"},{"dialString":"9512377809","id":"rch683","name":"Shahriar Shahrestani, MD","display":"(951)237-7809","role":"Pediatrics"},{"role":"Internal Medicine","display":"(626)235-3764","name":"Mohmad Shaikh, MD","id":"rch684","dialString":"6262353764"},{"display":"(951)288-0101","role":"Internal Medicine","name":"Mangala Shaker, MD","dialString":"9512880101","id":"rch685"},{"id":"rch686","dialString":"9496324735","role":"Radiology - Diagnostic","display":"(949)632-4735","name":"Soheil Sharifi-Amina, DO"},{"id":"rch687","dialString":"9092896092","display":"(909)289-6092","role":"Internal Medicine","name":"Sabhyata Sharma, MD"},{"display":"(949)412-1020","role":"Internal Medicine","name":"Andro Sharobiem, MD","id":"rch688","dialString":"9494121020"},{"display":"(626)660-5239","role":"Podiatry","name":"Tracie Shaw, DPM","dialString":"6266605239","id":"rch689"},{"role":"Surgery - Surgical Critical Care","display":"(304)389-4211","name":"Nicholas Sheets, MD","id":"rch690","dialString":"3043894211"},{"dialString":"9517081061","id":"rch691","role":"Radiology - Diagnostic","display":"(951)708-1061","name":"Eric Shelton, MD"},{"display":"(512)699-6108","role":"Neurology - Clinical Neurophysiology","name":"Jason Shen, MD","id":"rch692","dialString":"5126996108"},{"dialString":"3105610225","id":"rch693","display":"(310)561-0225","role":"Anesthesiology","name":"Jonathan Shen, DO"},{"dialString":"9098151802","id":"rch694","display":"(909)815-1802","role":"Internal Medicine","name":"Gregory Shimizu, MD"},{"display":"(858)603-2989","role":"Obstetrics & Gynecology","name":"Erin Shiv, MD","id":"rch695","dialString":"8586032989"},{"id":"rch696","dialString":"9175887073","display":"(917)588-7073","role":"Anesthesiology","name":"Marwa Sidani, MD"},{"role":"Ophthalmology","display":"(310)488-8112","name":"Lance Siegel, MD","id":"rch697","dialString":"3104888112"},{"name":"Sabrina Silveira-d'Avila, NP","role":"APP - Nurse Practitioner","display":"(626)376-0182","dialString":"6263760182","id":"rch698"},{"id":"rch699","dialString":"9098811319","name":"Maira Simental, MD","display":"(909)881-1319","role":"Radiology - Radiation Oncology"},{"id":"rch700","dialString":"9097544648","display":"(909)754-4648","role":"Otolaryngology","name":"Alfred Simental, MD"},{"role":"Family Medicine","display":"(951)956-5431","name":"Raj Sindher, MD","id":"rch701","dialString":"9519565431"},{"name":"Maninder Singh, MD","role":"Anesthesiology","display":"(909)680-0035","id":"rch702","dialString":"9096800035"},{"name":"Siddharth Singh, DO","display":"(515)490-7059","role":"Anesthesiology","id":"rch703","dialString":"5154907059"},{"name":"Dalbir Singh, MD","display":"(201)927-9334","role":"Pediatrics - Neonatal-Perinatal Medicine","id":"rch704","dialString":"2019279334"},{"role":"Otolaryngology","display":"(801)867-8063","name":"Alden Smith, MD","dialString":"8018678063","id":"rch705"},{"id":"rch706","dialString":"9096333835","display":"(909)633-3835","role":"APP - Physician Assistant","name":"Francis Snider, PA-C"},{"id":"rch707","dialString":"4087264976","name":"Anokh Sohal, DO","role":"Psychiatry","display":"(408)726-4976"},{"name":"Pejman Solaimani, MD","role":"Internal Medicine - Gastroenterology","display":"(310)927-4063","id":"rch708","dialString":"3109274063"},{"name":"Jason Solomon, MD","display":"(732)841-8414","role":"Orthopaedic Surgery","id":"rch709","dialString":"7328418414"},{"dialString":"9493942784","id":"rch710","name":"Ji Son, MD","display":"(949)394-2784","role":"Plastic Surgery"},{"role":"Obstetrics & Gynecology","display":"(517)282-9218","name":"Susrap Song, MD","dialString":"5172829218","id":"rch711"},{"id":"rch712","dialString":"9519663480","name":"David Song, MD","display":"(951)966-3480","role":"Neurology"},{"dialString":"9096022095","id":"rch713","role":"Internal Medicine","display":"(909)602-2095","name":"Margaret Song, MD"},{"dialString":"9496078766","id":"rch714","name":"Sylvia Soo, MD","display":"(949)607-8766","role":"Neurology - Neurocritical Care"},{"id":"rch715","dialString":"6263841716","name":"Fernando Sorto, DO","role":"Internal Medicine - Pulmonary Disease","display":"(626)384-1716"},{"dialString":"2012325509","id":"rch716","role":"APP - Certified Nurse Anesthetist","display":"(201)232-5509","name":"Chris Soto, CRNA"},{"name":"Lisa Sovory, MD","display":"(909)800-3246","role":"Neurology","dialString":"9098003246","id":"rch717"},{"display":"(951)818-1231","role":"APP - Nurse Practitioner","name":"Vanessa St Clair, NP","id":"rch718","dialString":"9518181231"},{"dialString":"7247876638","id":"rch719","display":"(724)787-6638","role":"Internal Medicine - Gastroenterology","name":"Christina Steinhauser, DO"},{"name":"John Steinmann, DO","display":"(909)798-5678","role":"Orthopaedic Surgery","dialString":"9097985678","id":"rch720"},{"role":"Internal Medicine - Pulmonary Disease","display":"(323)712-5768","name":"Tigran Stepanyan, DO","dialString":"3237125768","id":"rch721"},{"id":"rch722","dialString":"7147210303","name":"Katrina Stinson, MD","display":"(714)721-0303","role":"Obstetrics & Gynecology"},{"name":"Camille Stone, CNM","display":"(951)765-7313","role":"APP - Certified Nurse Midwife","dialString":"9517657313","id":"rch723"},{"id":"rch724","dialString":"9095540400","role":"Radiology - Neuroradiology","display":"(909)554-0400","name":"Charles Stout, MD"},{"dialString":"6039536795","id":"rch725","name":"Anthony Strada, MD","role":"Surgical Trauma","display":"(603)953-6795"},{"dialString":"9517417076","id":"rch726","display":"(951)741-7076","role":"APP - Physician Assistant","name":"Phillip Strubbe, PA"},{"display":"(909)835-0747","role":"Radiology - Diagnostic","name":"Johnny Suh, MD","id":"rch727","dialString":"9098350747"},{"name":"Jiraphat Sumner, NP","role":"APP - Nurse Practitioner - Internal Medicine","display":"(813)777-1432","dialString":"8137771432","id":"rch728"},{"id":"rch729","dialString":"9518307073","name":"Jimmy Sun, MD","role":"Otolaryngology","display":"(951)830-7073"},{"name":"Edward Sun, DO","display":"(818)303-6873","role":"Family Medicine","id":"rch730","dialString":"8183036873"},{"dialString":"4422028260","id":"rch731","name":"Ray Sunjed, MD","role":"Internal Medicine","display":"(442)202-8260"},{"id":"rch732","dialString":"2134405412","display":"(213)440-5412","role":"Internal Medicine - Clinical Cardiac Electrophysiology","name":"Ravi Sureddi, MD"},{"dialString":"7607170362","id":"rch733","role":"Emergency Medicine","display":"(760)717-0362","name":"Jessica Sutton, MD"},{"dialString":"4802278997","id":"rch734","role":"APP - Nurse Practitioner","display":"(480)227-8997","name":"Valerie Taft, APRN, CNP, AGNP"},{"id":"rch735","dialString":"9096328630","name":"Linda Tai, PA","display":"(909)632-8630","role":"APP - Physician Assistant"},{"dialString":"9515366996","id":"rch736","name":"Hidehisa Takei, MD","display":"(951)536-6996","role":"Surgery"},{"role":"Urology","display":"(626)512-2326","name":"Ken Takesita, MD","id":"rch737","dialString":"6265122326"},{"id":"rch738","dialString":"9513180834","display":"(951)318-0834","role":"Internal Medicine","name":"Antonio Tan, MD"},{"display":"(949)419-5425","role":"Anesthesiology","name":"Kevin Tan, MD","dialString":"9494195425","id":"rch739"},{"name":"Adina Tanasescu, MD","role":"Internal Medicine - Nephrology","display":"(714)856-4880","dialString":"7148564880","id":"rch740"},{"name":"Ricky Tang, MD","role":"Internal Medicine","display":"(951)833-4855","id":"rch741","dialString":"9518334855"},{"name":"Trinh Tang, MD","role":"Internal Medicine","display":"(951)295-5428","dialString":"9512955428","id":"rch742"},{"dialString":"3109535883","id":"rch743","name":"Jessica Tang, MD","display":"(310)953-5883","role":"Otolaryngology"},{"id":"rch744","dialString":"8479159461","name":"Sneha Taylor, MD","display":"(847)915-9461","role":"Pediatrics - Neonatal-Perinatal Medicine"},{"id":"rch745","dialString":"9495458386","role":"Emergency Medicine","display":"(949)545-8386","name":"Eric Teacher, MD"},{"name":"George Teitelbaum, MD","display":"(213)503-1689","role":"Radiology - Interventional & Diagnostic Radiology","id":"rch746","dialString":"2135031689"},{"id":"rch747","dialString":"8456410372","name":"Gabriel Tenembaum, MD","display":"(845)641-0372","role":"Obstetrics & Gynecology"},{"name":"Max Tenenbaum, MD","display":"(951)288-5069","role":"Family Medicine","dialString":"9512885069","id":"rch748"},{"role":"Urology","display":"(909)996-4468","name":"Nimish Thaker, MD","id":"rch749","dialString":"9099964468"},{"name":"Ravichandran Thiruvengadam, MD","display":"(951)545-6292","role":"Internal Medicine - Gastroenterology","dialString":"9515456292","id":"rch750"},{"id":"rch751","dialString":"7607744090","role":"APP - Nurse Practitioner - Internal Medicine","display":"(760)774-4090","name":"Samantha Thomas, NP"},{"name":"Nicole Thompson, NP","display":"(951)809-2868","role":"APP - Nurse Practitioner","dialString":"9518092868","id":"rch752"},{"role":"Emergency Medicine","display":"(951)536-6043","name":"David Tito, MD","id":"rch753","dialString":"9515366043"},{"id":"rch754","dialString":"9513128899","role":"APP - Certified Nurse Anesthetist","display":"(951)312-8899","name":"Joshua Toole, CRNA"},{"id":"rch755","dialString":"9254283839","name":"Amrit Toor, MD","role":"Family Medicine","display":"(925)428-3839"},{"id":"rch756","dialString":"6179353711","display":"(617)935-3711","role":"Emergency Medicine","name":"Eva Tovar Hirashima, MD"},{"name":"Lien-Khuong Tran, MD","role":"Internal Medicine - Pulmonary Disease","display":"(657)282-9378","id":"rch757","dialString":"6572829378"},{"dialString":"7149242072","id":"rch758","display":"(714)924-2072","role":"Hematology/Oncology","name":"Chau Tran, DO"},{"dialString":"9517100093","id":"rch759","name":"Audrey Tran, DO","display":"(951)710-0093","role":"Internal Medicine"},{"name":"Ngoc-Hai Truong, MD","role":"Anesthesiology","display":"(714)936-9315","dialString":"7149369315","id":"rch760"},{"role":"Urology","display":"(951)283-0028","name":"Sy Tsi, MD","id":"rch761","dialString":"9512830028"},{"id":"rch762","dialString":"8189758319","display":"(818)975-8319","role":"Neurology - Clinical Neurophysiology","name":"Evgeny Tsimerinov, MD"},{"display":"(708)257-9539","role":"APP - Nurse Practitioner","name":"Tamara Tucker, APRN, CNP, AGNP-AC","id":"rch763","dialString":"7082579539"},{"dialString":"6103081515","id":"rch764","name":"Kimberly Tustison, MD","role":"Obstetrics & Gynecology","display":"(610)308-1515"},{"dialString":"9512590278","id":"rch765","role":"Pediatrics","display":"(951)259-0278","name":"Jesse Tweed, MD"},{"name":"Matthew Underwood, MD","display":"(909)557-3565","role":"Emergency Medicine","dialString":"9095573565","id":"rch766"},{"role":"APP - Physician Assistant - Emergency Medicine","display":"(480)710-7730","name":"Alexandria Valadez, PA","dialString":"4807107730","id":"rch767"},{"id":"rch768","dialString":"9096483320","role":"Vascular Surgery","display":"(909)648-3320","name":"Joseph Vanderlinden, MD"},{"role":"Internal Medicine","display":"(949)943-6423","name":"Ali Varasteh, MD","dialString":"9499436423","id":"rch769"},{"display":"(909)748-1023","role":"Obstetrics & Gynecology","name":"Peter Vasquez, MD","dialString":"9097481023","id":"rch770"},{"role":"Surgery","display":"(949)300-9633","name":"Francisco Vega, MD","dialString":"9493009633","id":"rch771"},{"id":"rch772","dialString":"7144230485","display":"(714)423-0485","role":"Pediatrics","name":"Roopa Viraraghavan, MD"},{"dialString":"4176931792","id":"rch773","name":"Jennifer Vong, DO","display":"(417)693-1792","role":"Obstetrics & Gynecology"},{"dialString":"9095539286","id":"rch774","role":"Emergency Medicine","display":"(909)553-9286","name":"Marcus Voth, MD"},{"id":"rch775","dialString":"7147669332","name":"Manvir Wadhwa, MD","display":"(714)766-9332","role":"Internal Medicine"},{"dialString":"9096800121","id":"rch776","display":"(909)680-0121","role":"Emergency Medicine","name":"David Wagner, MD"},{"id":"rch777","dialString":"4152548302","name":"Matthew Wai, DO","role":"Internal Medicine","display":"(415)254-8302"},{"dialString":"7184275765","id":"rch778","role":"Internal Medicine - Interventional Cardiology","display":"(718)427-5765","name":"Alain Waked, MD"},{"dialString":"9098948605","id":"rch779","display":"(909)894-8605","role":"Otolaryngology","name":"Paul Walker, MD"},{"display":"(909)579-6721","role":"Thoracic & Cardiac Surgery","name":"Nan Wang, MD","id":"rch780","dialString":"9095796721"},{"dialString":"9039311148","id":"rch781","display":"(903)931-1148","role":"Pediatrics","name":"Angela Wang, DO"},{"name":"Shin-Chern Wang, MD","role":"Surgery","display":"(626)374-1123","dialString":"6263741123","id":"rch782"},{"dialString":"6508610390","id":"rch783","display":"(650)861-0390","role":"APP - Certified Nurse Anesthetist","name":"Leea Ward, RN, CRNA"},{"id":"rch784","dialString":"9515323593","name":"Timothy Watson, MD","role":"Pediatrics","display":"(951)532-3593"},{"dialString":"7145013760","id":"rch785","display":"(714)501-3760","role":"Surgery","name":"Peter Wawro, MD"},{"id":"rch786","dialString":"9096855340","name":"Lihini Weerasinghe, MD","display":"(909)685-5340","role":"Internal Medicine"},{"name":"Justin Wei, MD","display":"(347)306-2989","role":"Radiology - Diagnostic","dialString":"3473062989","id":"rch787"},{"dialString":"4023217754","id":"rch788","name":"Alex Wilkie, CRNA","display":"(402)321-7754","role":"APP - Certified Nurse Anesthetist"},{"role":"APP - Certified Nurse Anesthetist","display":"(909)255-2661","name":"Brendan Williams, CRNA","id":"rch789","dialString":"9092552661"},{"dialString":"3135491810","id":"rch790","name":"Peter Wilton, MD","role":"Surgery - Surgery of the Hand","display":"(313)549-1810"},{"id":"rch791","dialString":"3472106029","role":"Anesthesiology","display":"(347)210-6029","name":"Nutan Winston, MD"},{"dialString":"9516758252","id":"rch792","name":"Carl Wolnisty, MD","display":"(951)675-8252","role":"Internal Medicine - Gastroenterology"},{"dialString":"7343304866","id":"rch793","name":"Andrew Wong, MD","role":"Orthopaedic Surgery","display":"(734)330-4866"},{"name":"Kelvin Wong, MD","role":"Emergency Medicine","display":"(714)404-1634","dialString":"7144041634","id":"rch794"},{"role":"Urology","display":"(858)519-6540","name":"Vincent Wong, MD","id":"rch795","dialString":"8585196540"},{"display":"(813)404-3800","role":"APP - Certified Nurse Anesthetist","name":"Jeffrey Wood, CRNA","id":"rch796","dialString":"8134043800"},{"dialString":"7143283077","id":"rch797","display":"(714)328-3077","role":"Emergency Medicine","name":"Allison Woodall, MD"},{"name":"Catherine Worden, MD","display":"(951)347-2608","role":"Obstetrics & Gynecology","id":"rch798","dialString":"9513472608"},{"display":"(951)500-9156","role":"Psychiatry","name":"James Wu, DO","id":"rch799","dialString":"9515009156"},{"id":"rch800","dialString":"9517519096","display":"(951)751-9096","role":"Podiatric Surgery","name":"Daisy Wu, DPM"},{"dialString":"9512550574","id":"rch801","display":"(951)255-0574","role":"Anesthesiology","name":"Long Xu, MD"},{"dialString":"9515053621","id":"rch802","role":"Radiology - Interventional & Diagnostic Radiology","display":"(951)505-3621","name":"Vinay Yagnik, MD"},{"display":"(509)200-1982","role":"Internal Medicine - Hematology","name":"Hiroshi Yamagata, MD","dialString":"5092001982","id":"rch803"},{"dialString":"6268020824","id":"rch804","name":"Daniel Yamane, MD","role":"Family Medicine","display":"(626)802-0824"},{"dialString":"9198124121","id":"rch805","role":"Urology","display":"(919)812-4121","name":"Benjamin Yang, MD"},{"name":"Tom Yao, MD","role":"Anesthesiology - Pain Medicine","display":"(909)919-4815","dialString":"9099194815","id":"rch806"},{"display":"(805)990-0614","role":"Internal Medicine","name":"Timothy Yaopruke, DO","id":"rch807","dialString":"8059900614"},{"id":"rch808","dialString":"8582040871","name":"Christopher Yau, MD","role":"Radiology - Diagnostic","display":"(858)204-0871"},{"name":"Jessica Yen, MD","display":"(574)261-9956","role":"Neurology","dialString":"5742619956","id":"rch809"},{"name":"Elvin Yeo, MD","display":"(909)238-2822","role":"Obstetrics & Gynecology","id":"rch810","dialString":"9092382822"},{"name":"Kerem Yilmaz, PA","role":"APP - Physician Assistant - Pulmonary Disease","display":"(949)235-3061","dialString":"9492353061","id":"rch811"},{"role":"Internal Medicine","display":"(443)315-6779","name":"Sang Yim, MD","id":"rch812","dialString":"4433156779"},{"dialString":"7148337226","id":"rch813","name":"John Yoo, PA","role":"APP - Physician Assistant - Orthopaedic Surgery","display":"(714)833-7226"},{"name":"Edward Yun, MD","role":"Urology","display":"(949)438-0801","dialString":"9494380801","id":"rch814"},{"id":"rch815","dialString":"3129520573","name":"Steven Zak, MD","role":"Neurology","display":"(312)952-0573"},{"dialString":"3104982343","id":"rch816","role":"Internal Medicine - Nephrology","display":"(310)498-2343","name":"Kirollos Zaki, DO"},{"name":"Dalia Zaky Dawoud, MD","role":"Internal Medicine - Nephrology","display":"(214)551-4321","id":"rch817","dialString":"2145514321"},{"id":"rch818","dialString":"3605366559","role":"Internal Medicine - Pulmonary Disease","display":"(360)536-6559","name":"Peter Zamfirescu-Alexander, MD"},{"name":"Babak Zamiri, MD","display":"(909)964-2041","role":"Internal Medicine - Rheumatology","dialString":"9099642041","id":"rch819"},{"name":"Afshin Zandpour, MD","display":"(949)257-2424","role":"Family Medicine","dialString":"9492572424","id":"rch820"},{"name":"Ammar Zanial, CRNA","role":"APP - Certified Nurse Anesthetist","display":"(661)378-8577","dialString":"6613788577","id":"rch821"},{"role":"Internal Medicine","display":"(626)202-6539","name":"Lily Zhong, DO","id":"rch822","dialString":"6262026539"},{"dialString":"4149791701","id":"rch823","role":"Anesthesiology","display":"(414)979-1701","name":"Bo-Lu Zhou, MD"},{"role":"Emergency Medicine","display":"(310)927-9140","name":"Samuel Zidovetzki, MD","dialString":"3109279140","id":"rch824"}];
+
+const CHSB_HOSPITAL_UNITS = {
+  id: 'chsb-units',
+  name: 'Hospital Units',
+  entries: [
+    /* Floors & Patient Units */
+    { id:'cu01', label:'3rd Floor',                  display:'909-887-6333 x37300', dialString:'9098876333,,9,,37300' },
+    { id:'cu02', label:'4th Floor',                  display:'909-887-6333 x37400', dialString:'9098876333,,9,,37400' },
+    { id:'cu03', label:'5th Floor (Line 1)',          display:'909-887-6333 x37500', dialString:'9098876333,,9,,37500' },
+    { id:'cu04', label:'5th Floor (Line 2)',          display:'909-887-6333 x37550', dialString:'9098876333,,9,,37550' },
+    { id:'cu05', label:'Couplet Care (Line 1)',       display:'909-887-6333 x33761', dialString:'9098876333,,9,,33761' },
+    { id:'cu06', label:'Couplet Care (Line 2)',       display:'909-887-6333 x33762', dialString:'9098876333,,9,,33762' },
+    { id:'cu07', label:'ER (Line 1)',                 display:'909-887-6333 x63550', dialString:'9098876333,,9,,63550', note:'ER Charge: x2310' },
+    { id:'cu08', label:'ER (Line 2)',                 display:'909-887-6333 x33570', dialString:'9098876333,,9,,33570' },
+    { id:'cu09', label:'ER Physician',                display:'909-887-6333 x33553', dialString:'9098876333,,9,,33553' },
+    { id:'cu10', label:'ER RAP Room (Line 1)',        display:'909-887-6333 x61646', dialString:'9098876333,,9,,61646' },
+    { id:'cu11', label:'ER RAP Room (Line 2)',        display:'909-887-6333 x37036', dialString:'9098876333,,9,,37036' },
+    { id:'cu12', label:'ICCU 1 (Beds 1-11)',          display:'909-887-6333 x33310', dialString:'9098876333,,9,,33310' },
+    { id:'cu13', label:'ICCU 2 (Beds 12-22)',         display:'909-887-6333 x33300', dialString:'9098876333,,9,,33300' },
+    { id:'cu14', label:'L&D (Line 1)',                display:'909-887-6333 x37251', dialString:'9098876333,,9,,37251' },
+    { id:'cu15', label:'L&D (Line 2)',                display:'909-887-6333 x37252', dialString:'9098876333,,9,,37252' },
+    { id:'cu16', label:'Nursery / NICU (Line 1)',     display:'909-887-6333 x37242', dialString:'9098876333,,9,,37242' },
+    { id:'cu17', label:'Nursery / NICU (Line 2)',     display:'909-887-6333 x37241', dialString:'9098876333,,9,,37241' },
+    { id:'cu18', label:'NCUW (Beds 1-16)',            display:'909-887-6333 x33151', dialString:'9098876333,,9,,33151' },
+    { id:'cu19', label:'NCUE (Beds 17-31)',           display:'909-887-6333 x33191', dialString:'9098876333,,9,,33191' },
+    { id:'cu20', label:'NCUN (Beds 32-48)',           display:'909-887-6333 x33100', dialString:'9098876333,,9,,33100' },
+    { id:'cu21', label:'Pediatrics',                  display:'909-887-6333 x33700', dialString:'9098876333,,9,,33700' },
+    { id:'cu22', label:'Post Partum',                 display:'909-887-6333 x37231', dialString:'9098876333,,9,,37231' },
+    { id:'cu23', label:'Psych - Open (901-923)',      display:'909-887-6333 x33900', dialString:'9098876333,,9,,33900' },
+    { id:'cu24', label:'Psych - North (930-939)',     display:'909-887-6333 x33830', dialString:'9098876333,,9,,33830' },
+    { id:'cu25', label:'Psych - West (1-6)',          display:'909-887-6333 x33800', dialString:'9098876333,,9,,33800' },
+    { id:'cu26', label:'Psych - East (7-15)',         display:'909-887-6333 x33850', dialString:'9098876333,,9,,33850' },
+    { id:'cu27', label:'PSA',                         display:'909-887-6333 x34571', dialString:'9098876333,,9,,34571' },
+    /* Surgery */
+    { id:'cu28', label:'OP Surgery (2nd Floor)',      display:'909-887-6333 x33245', dialString:'9098876333,,9,,33245' },
+    { id:'cu29', label:'OP Surgery Scheduling',       display:'909-887-6333 x33206', dialString:'9098876333,,9,,33206' },
+    { id:'cu30', label:'PACU - Recovery',             display:'909-887-6333 x37276', dialString:'9098876333,,9,,37276' },
+    { id:'cu31', label:'Surgery (Line 1)',            display:'909-887-6333 x37297', dialString:'9098876333,,9,,37297' },
+    { id:'cu32', label:'Surgery (Line 2)',            display:'909-887-6333 x37299', dialString:'9098876333,,9,,37299' },
+    /* Departments */
+    { id:'cu33', label:'Admitting - Tower (Line 1)',  display:'909-887-6333 x61302', dialString:'9098876333,,9,,61302' },
+    { id:'cu34', label:'Admitting - Tower (Line 2)',  display:'909-887-6333 x61308', dialString:'9098876333,,9,,61308' },
+    { id:'cu35', label:'Admitting - CMP',             display:'909-887-6333 x4811',  dialString:'9098876333,,9,,4811'  },
+    { id:'cu36', label:'Cardiopulmonary (Line 1)',    display:'909-887-6333 x61425', dialString:'9098876333,,9,,61425' },
+    { id:'cu37', label:'Cardiopulmonary (Line 2)',    display:'909-887-6333 x62361', dialString:'9098876333,,9,,62361' },
+    { id:'cu38', label:'Echo Lab',                    display:'909-887-6333 x61423', dialString:'9098876333,,9,,61423' },
+    { id:'cu39', label:'EEG Lab',                     display:'909-887-6333 x61453', dialString:'9098876333,,9,,61453' },
+    { id:'cu40', label:'Laboratory (Line 1)',         display:'909-887-6333 x61432', dialString:'9098876333,,9,,61432' },
+    { id:'cu41', label:'Laboratory (Line 2)',         display:'909-887-6333 x61471', dialString:'9098876333,,9,,61471' },
+    { id:'cu42', label:'Medical Records (Line 1)',    display:'909-887-6333 x61500', dialString:'9098876333,,9,,61500' },
+    { id:'cu43', label:'Medical Records (Line 2)',    display:'909-887-6333 x61555', dialString:'9098876333,,9,,61555' },
+    { id:'cu44', label:'Pharmacy',                    display:'909-887-6333 x61402', dialString:'9098876333,,9,,61402' },
+    { id:'cu45', label:'Stress Lab',                  display:'909-887-6333 x33872', dialString:'9098876333,,9,,33872' },
+    { id:'cu46', label:'House Supervisor',            display:'909-887-6333 x61800', dialString:'9098876333,,9,,61800' },
+    /* Medical Imaging */
+    { id:'cu47', label:'Angio (Line 1)',              display:'909-887-6333 x37171', dialString:'9098876333,,9,,37171' },
+    { id:'cu48', label:'Angio (Line 2)',              display:'909-887-6333 x37159', dialString:'9098876333,,9,,37159' },
+    { id:'cu49', label:'Angio (Line 3)',              display:'909-887-6333 x37156', dialString:'9098876333,,9,,37156' },
+    { id:'cu50', label:'CT',                          display:'909-887-6333 x37169', dialString:'9098876333,,9,,37169' },
+    { id:'cu51', label:'Front Desk (Line 1)',         display:'909-887-6333 x37151', dialString:'9098876333,,9,,37151' },
+    { id:'cu52', label:'Front Desk (Line 2)',         display:'909-887-6333 x37152', dialString:'9098876333,,9,,37152' },
+    { id:'cu53', label:'Front Desk (Line 3)',         display:'909-887-6333 x37179', dialString:'9098876333,,9,,37179' },
+    { id:'cu54', label:'Mammography',                 display:'909-887-6333 x61466', dialString:'9098876333,,9,,61466' },
+    { id:'cu55', label:'MRI',                         display:'909-887-6333 x61709', dialString:'9098876333,,9,,61709' },
+    { id:'cu56', label:'NM (Line 1)',                 display:'909-887-6333 x37161', dialString:'9098876333,,9,,37161' },
+    { id:'cu57', label:'NM (Line 2)',                 display:'909-887-6333 x37164', dialString:'9098876333,,9,,37164' },
+    { id:'cu58', label:'Operation Area (Line 1)',     display:'909-887-6333 x37165', dialString:'9098876333,,9,,37165' },
+    { id:'cu59', label:'Operation Area (Line 2)',     display:'909-887-6333 x37172', dialString:'9098876333,,9,,37172' },
+    { id:'cu60', label:'Operation Area (Line 3)',     display:'909-887-6333 x37177', dialString:'9098876333,,9,,37177' },
+    { id:'cu61', label:'Radiologist Reading Room',    display:'909-887-6333 x37163', dialString:'9098876333,,9,,37163' },
+    { id:'cu62', label:'Ultrasound',                  display:'909-887-6333 x61678', dialString:'9098876333,,9,,61678' },
+    { id:'cu63', label:'US Room #1',                  display:'909-887-6333 x37160', dialString:'9098876333,,9,,37160' },
+    { id:'cu64', label:'Scheduling (Direct)',         display:'909-806-1225',         dialString:'9098061225' },
+    /* ER Detail */
+    { id:'cu65', label:'ER - Castle',                 display:'909-887-6333 x33593', dialString:'9098876333,,9,,33593' },
+    { id:'cu66', label:'ER - Breakroom',              display:'909-887-6333 x37035', dialString:'9098876333,,9,,37035' },
+    { id:'cu67', label:'ER - Triage 1',               display:'909-887-6333 x33575', dialString:'9098876333,,9,,33575' },
+    { id:'cu68', label:'ER - Triage 2',               display:'909-887-6333 x33578', dialString:'9098876333,,9,,33578' },
+    { id:'cu69', label:'ER - Triage 3',               display:'909-887-6333 x33573', dialString:'9098876333,,9,,33573' },
+    { id:'cu70', label:'ER - Triage 4',               display:'909-887-6333 x33592', dialString:'9098876333,,9,,33592' },
+    /* Imaging Management / PACS */
+    { id:'cu71', label:'Tim Seavey - DMI Director (Direct)', display:'909-806-1936', dialString:'9098061936' },
+    { id:'cu72', label:'Tim Seavey - DMI Director (Cell)',   display:'909-936-4607', dialString:'9099364607' },
+    { id:'cu73', label:'Amy Baglin - DMI Manager (Direct)',  display:'909-806-1935', dialString:'9098061935' },
+    { id:'cu74', label:'Amy Baglin - DMI Manager (Cell)',    display:'760-688-9348', dialString:'7606889348' },
+    { id:'cu75', label:'Matt Quiba - PACS Admin',            display:'909-887-6333 x61499', dialString:'9098876333,,9,,61499' },
+    { id:'cu76', label:'Gerrad Smith - PACS On-Call (Cell)', display:'909-641-1547', dialString:'9096411547' },
+  ]
+};
+
+const SB_HOSPITAL_UNITS = {
+  id: 'sb-units',
+  name: 'Hospital Units',
+  entries: [
+    /* ICU */
+    { id:'sb01', label:'ICU (Direct)',                   display:'909-654-0110',          dialString:'9096540110' },
+    { id:'sb02', label:'ICU Fellows (Line 1, 24/7)',     display:'909-883-8711 x21601',   dialString:'9098838711,,2,,21601', note:'Held 24/7 — use for ICU critical findings' },
+    { id:'sb03', label:'ICU Fellows (Line 2, 24/7)',     display:'909-883-8711 x21607',   dialString:'9098838711,,2,,21607', note:'Held 24/7 — use for ICU critical findings' },
+    /* OB / Maternal */
+    { id:'sb04', label:'Mother Baby',                    display:'909-654-0119',          dialString:'9096540119' },
+    { id:'sb05', label:'Labor & Delivery',               display:'909-266-6614',          dialString:'9092666614' },
+    { id:'sb06', label:'NICU',                           display:'909-654-0118',          dialString:'9096540118' },
+    /* Floors */
+    { id:'sb07', label:'4 NS',                           display:'909-289-9369',          dialString:'9092899369' },
+    { id:'sb08', label:'4 EW',                           display:'909-665-2101',          dialString:'9096652101' },
+    { id:'sb09', label:'5 NS',                           display:'909-665-0528',          dialString:'9096650528' },
+    { id:'sb10', label:'5 EW',                           display:'909-665-4678',          dialString:'9096654678' },
+    { id:'sb11', label:'6 NS',                           display:'909-654-0107',          dialString:'9096540107' },
+    { id:'sb12', label:'6 EW',                           display:'909-654-0108',          dialString:'9096540108' },
+    { id:'sb13', label:'6 TN',                           display:'909-654-0107',          dialString:'9096540107' },
+    /* Other Units */
+    { id:'sb14', label:'Respiratory',                    display:'909-531-0148',          dialString:'9095310148' },
+    { id:'sb15', label:'House Supervisor',               display:'909-685-5922',          dialString:'9096855922' },
+    { id:'sb16', label:'ED Charge Nurse',                display:'909-942-1081',          dialString:'9099421081' },
+  ]
+};
+
+const SB_UNIT_EXTENSIONS = {
+  id: 'sb-unit-ext',
+  name: 'Unit Extensions',
+  entries: [
+    /* CCU / ICU sides via main line */
+    { id:'sbu01', label:'ER (Unit Ext)',            display:'909-883-8711 x17140', dialString:'9098838711,,2,,17140' },
+    { id:'sbu02', label:'CCU Side 1 (Beds 1-6)',    display:'909-883-8711 x23845', dialString:'9098838711,,2,,23845' },
+    { id:'sbu03', label:'CCU Side 2 (Beds 7-14)',   display:'909-883-8711 x23850', dialString:'9098838711,,2,,23850' },
+    { id:'sbu04', label:'CCU Side 3 (Beds 15-20)',  display:'909-883-8711 x23853', dialString:'9098838711,,2,,23853' },
+    { id:'sbu05', label:'CCU Side 4 (Beds 21-26)',  display:'909-883-8711 x25849', dialString:'9098838711,,2,,25849' },
+    { id:'sbu06', label:'CCU Side 5 (Beds 27-30)',  display:'909-883-8711 x25852', dialString:'9098838711,,2,,25852' },
+    { id:'sbu07', label:'CCU Side 6 (Beds 31-37)',  display:'909-883-8711 x25855', dialString:'9098838711,,2,,25855' },
+    { id:'sbu08', label:'CCU Side 7 / DOU (38-47)', display:'909-883-8711 x23836', dialString:'9098838711,,2,,23836' },
+    /* OB / Maternal */
+    { id:'sbu09', label:'L&D (Ext)',                display:'909-883-8711 x22050', dialString:'9098838711,,2,,22050' },
+    { id:'sbu10', label:'Post-Partum (Ext)',         display:'909-883-8711 x23867', dialString:'9098838711,,2,,23867' },
+    { id:'sbu11', label:'NICU (Ext)',               display:'909-883-8711 x22070', dialString:'9098838711,,2,,22070' },
+    /* Floor 4 */
+    { id:'sbu12', label:'Floor 4 Charge Cell',      display:'909-654-0109',         dialString:'9096540109',            note:'Charge nurse cell – 4 NS & 4 EW' },
+    { id:'sbu13', label:'4 NS / 4TW NS Tele',       display:'909-883-8711 x27201', dialString:'9098838711,,2,,27201' },
+    { id:'sbu14', label:'4 EW',                     display:'909-883-8711 x22122', dialString:'9098838711,,2,,22122' },
+    { id:'sbu15', label:'4TW E Ortho',              display:'909-883-8711 x22135', dialString:'9098838711,,2,,22135' },
+    { id:'sbu16', label:'4TW W',                    display:'909-883-8711 x22121', dialString:'9098838711,,2,,22121' },
+    /* Floor 5 */
+    { id:'sbu17', label:'5 NS / 5TW N',             display:'909-883-8711 x25684', dialString:'9098838711,,2,,25684' },
+    { id:'sbu18', label:'5 EW / 5TW E',             display:'909-883-8711 x22190', dialString:'9098838711,,2,,22190' },
+    { id:'sbu19', label:'5TW W',                    display:'909-883-8711 x22180', dialString:'9098838711,,2,,22180' },
+    { id:'sbu20', label:'5TW S',                    display:'909-883-8711 x25691', dialString:'9098838711,,2,,25691' },
+    /* Floor 6 */
+    { id:'sbu21', label:'6 NS / 6TW N Tele',        display:'909-883-8711 x23955', dialString:'9098838711,,2,,23955' },
+    { id:'sbu22', label:'6 EW / 6TW W',             display:'909-883-8711 x22210', dialString:'9098838711,,2,,22210' },
+    { id:'sbu23', label:'6TW E',                    display:'909-883-8711 x22220', dialString:'9098838711,,2,,22220' },
+    { id:'sbu24', label:'6TW S',                    display:'909-883-8711 x23964', dialString:'9098838711,,2,,23964' },
+  ]
+};
+
+const SB_IMAGING_SERVICES = {
+  id: 'sb-imaging',
+  name: 'Imaging Services',
+  entries: [
+    { id:'sbi01', label:'Radiology Main',              display:'909-883-8711 x23630', dialString:'9098838711,,2,,23630' },
+    { id:'sbi02', label:'Radiology Scheduling',        display:'909-883-8711 x23641', dialString:'9098838711,,2,,23641' },
+    { id:'sbi03', label:'Radiology / Outpatient',      display:'909-883-8711 x23790', dialString:'9098838711,,2,,23790' },
+    { id:'sbi04', label:'Radiology Tech',              display:'909-883-8711 x23798', dialString:'9098838711,,2,,23798' },
+    { id:'sbi05', label:'Angio',                       display:'909-883-8711 x23652', dialString:'9098838711,,2,,23652' },
+    { id:'sbi06', label:'Echocardiography (Line 1)',   display:'909-883-8711 x23200', dialString:'9098838711,,2,,23200' },
+    { id:'sbi07', label:'Echocardiography (Line 2)',   display:'909-883-8711 x21592', dialString:'9098838711,,2,,21592' },
+    { id:'sbi08', label:'File Room',                   display:'909-883-8711 x23659', dialString:'9098838711,,2,,23659' },
+    { id:'sbi09', label:'Imaging Center (Direct)',     display:'909-881-4568',         dialString:'9098814568' },
+    { id:'sbi10', label:'Interventional Radiology',    display:'909-883-8711 x22320', dialString:'9098838711,,2,,22320' },
+    { id:'sbi11', label:'MRI',                         display:'909-883-8711 x23666', dialString:'9098838711,,2,,23666' },
+    { id:'sbi12', label:'Neurodiagnostics / EEG',      display:'909-883-8711 x23686', dialString:'9098838711,,2,,23686' },
+    { id:'sbi13', label:'Nuclear Medicine',            display:'909-883-8711 x23653', dialString:'9098838711,,2,,23653' },
+    { id:'sbi14', label:'Ultrasound (Alt Line)',       display:'909-883-8711 x22700', dialString:'9098838711,,2,,22700' },
+    { id:'sbi15', label:"Women's Center Scheduling (Line 1)", display:'909-883-8711 x14568', dialString:'9098838711,,2,,14568' },
+    { id:'sbi16', label:"Women's Center Scheduling (Line 2)", display:'909-883-8711 x23633', dialString:'9098838711,,2,,23633' },
+    { id:'sbi17', label:'CT Charge (Cell)',            display:'909-677-8384',         dialString:'9096778384',            note:'Direct charge tech cell' },
+    { id:'sbi18', label:'US Charge (Cell)',            display:'909-677-8319',         dialString:'9096778319',            note:'Direct charge tech cell' },
+  ]
+};
+
+const SB_CLINICAL_DEPTS = {
+  id: 'sb-clinical',
+  name: 'Clinical Departments',
+  entries: [
+    { id:'sbc01', label:'Lab Services (Line 1)',      display:'909-883-8711 x23485', dialString:'9098838711,,2,,23485' },
+    { id:'sbc02', label:'Lab Services (Line 2)',      display:'909-883-8711 x23486', dialString:'9098838711,,2,,23486' },
+    { id:'sbc03', label:'Blood Bank',                 display:'909-883-8711 x23492', dialString:'9098838711,,2,,23492' },
+    { id:'sbc04', label:'Pharmacy',                   display:'909-883-8711 x23577', dialString:'9098838711,,2,,23577' },
+    { id:'sbc05', label:'Surgery Main',               display:'909-883-8711 x23715', dialString:'9098838711,,2,,23715' },
+    { id:'sbc06', label:'PACU / Recovery',            display:'909-883-8711 x23670', dialString:'9098838711,,2,,23670' },
+    { id:'sbc07', label:'Dialysis (Ext)',             display:'909-883-8711 x23930', dialString:'9098838711,,2,,23930' },
+    { id:'sbc08', label:'Dialysis (Direct)',          display:'909-881-4356',         dialString:'9098814356' },
+    { id:'sbc09', label:'ER (Line 2)',                display:'909-883-8711 x23365', dialString:'9098838711,,2,,23365' },
+    { id:'sbc10', label:'ER Charge RN (Ext)',         display:'909-883-8711 x23388', dialString:'9098838711,,2,,23388' },
+    { id:'sbc11', label:'ER Triage',                  display:'909-883-8711 x23367', dialString:'9098838711,,2,,23367' },
+    { id:'sbc12', label:'House Supervisor (Ext 1)',   display:'909-883-8711 x14338', dialString:'9098838711,,2,,14338' },
+    { id:'sbc13', label:'House Supervisor (Ext 2)',   display:'909-883-8711 x23278', dialString:'9098838711,,2,,23278' },
+  ]
+};
+
+const SB_CLINICIANS = [
+  /* Management */
+  { id:'sbcl001', name:'Wesley Toh',              role:'Sr Director Ancillary Services',  display:'909-488-2532', dialString:'9094882532' },
+  { id:'sbcl002', name:'Ranilo Blasco',           role:'Imaging Manager',                 display:'714-496-0388', dialString:'7144960388' },
+  { id:'sbcl003', name:'Jeff Freeman',            role:'Imaging Supervisor',              display:'909-300-5261', dialString:'9093005261' },
+  { id:'sbcl004', name:'Daniel Prokopij',         role:'PACS Administrator',              display:'909-641-1129', dialString:'9096411129' },
+  { id:'sbcl005', name:'Shelley Becker',          role:'RSO',                             display:'626-616-5135', dialString:'6266165135' },
+  /* CT Technologists */
+  { id:'sbcl006', name:'Eric Estrada',            role:'CT Technologist',                 display:'909-533-0744', dialString:'9095330744' },
+  { id:'sbcl007', name:'Veronica Cantor',         role:'CT Technologist',                 display:'909-534-8125', dialString:'9095348125' },
+  { id:'sbcl008', name:'Eric Dahlberg',           role:'CT Technologist',                 display:'909-894-6403', dialString:'9098946403' },
+  { id:'sbcl009', name:'Adrienne Durgin',         role:'CT Technologist',                 display:'909-567-7897', dialString:'9095677897' },
+  { id:'sbcl010', name:'Natalie Guevara',         role:'CT Technologist',                 display:'909-565-7161', dialString:'9095657161' },
+  { id:'sbcl011', name:'Jessica Holguin',         role:'CT Technologist',                 display:'951-205-6330', dialString:'9512056330' },
+  { id:'sbcl012', name:'Michael Janini',          role:'CT Technologist',                 display:'909-955-5478', dialString:'9099555478' },
+  { id:'sbcl013', name:'Cynthia Ledesma',         role:'CT Technologist',                 display:'909-518-6142', dialString:'9095186142' },
+  { id:'sbcl014', name:'Paul Leograndis',         role:'CT Technologist',                 display:'760-912-1062', dialString:'7609121062' },
+  { id:'sbcl015', name:'Francisco Rivera',        role:'CT Technologist',                 display:'909-213-2540', dialString:'9092132540' },
+  { id:'sbcl016', name:'Lucy Ruiz',               role:'CT Technologist',                 display:'951-383-5680', dialString:'9513835680' },
+  { id:'sbcl017', name:'Viktoria Taylor',         role:'CT Technologist',                 display:'562-266-8027', dialString:'5622668027' },
+  /* MRI Technologists */
+  { id:'sbcl018', name:'Elise Allemand',          role:'MRI Technologist',                display:'760-508-7431', dialString:'7605087431' },
+  { id:'sbcl019', name:'Tammy La Ford',           role:'MRI Technologist',                display:'909-644-5987', dialString:'9096445987' },
+  { id:'sbcl020', name:'Rosalyn Tacchia',         role:'MRI Technologist',                display:'760-774-9119', dialString:'7607749119' },
+  { id:'sbcl021', name:'JR Mora',                 role:'MRI Technologist',                display:'626-664-1778', dialString:'6266641778' },
+  /* Ultrasound Technologists */
+  { id:'sbcl022', name:'Margareth Freire',        role:'US Technologist',                 display:'951-965-7695', dialString:'9519657695' },
+  { id:'sbcl023', name:'Nicole Christianson',     role:'US Technologist',                 display:'760-983-1072', dialString:'7609831072' },
+  { id:'sbcl024', name:'Destiny Cooksey',         role:'US Technologist',                 display:'310-989-0957', dialString:'3109890957' },
+  { id:'sbcl025', name:'Brittney Digiantomasso',  role:'US Technologist',                 display:'909-276-1494', dialString:'9092761494' },
+  { id:'sbcl026', name:'Crystal Ferris',          role:'US Technologist',                 display:'951-751-3704', dialString:'9517513704' },
+  { id:'sbcl027', name:'Wendy Lopez',             role:'US Technologist',                 display:'951-905-7387', dialString:'9519057387' },
+  { id:'sbcl028', name:'Gary Luong',              role:'US Technologist',                 display:'951-756-9314', dialString:'9517569314' },
+  { id:'sbcl029', name:'Elisa Mena',              role:'US Technologist',                 display:'909-246-8670', dialString:'9092468670' },
+  { id:'sbcl030', name:'Maria Ponce',             role:'US Technologist',                 display:'951-692-6960', dialString:'9516926960' },
+  { id:'sbcl031', name:'Nick Reed',               role:'US Technologist',                 display:'909-648-7325', dialString:'9096487325' },
+  { id:'sbcl032', name:'Ariell Rook',             role:'US Technologist',                 display:'760-981-9855', dialString:'7609819855' },
+  { id:'sbcl033', name:'Sara Stowers',            role:'US Technologist',                 display:'909-251-6256', dialString:'9092516256' },
+  { id:'sbcl034', name:'Chelsea Traxler',         role:'US Technologist',                 display:'909-272-8663', dialString:'9092728663' },
+  { id:'sbcl035', name:'Yesenia Valdez Cardona',  role:'US Technologist',                 display:'619-343-0560', dialString:'6193430560' },
+  { id:'sbcl036', name:'Kailey Wachter',          role:'US Technologist',                 display:'760-220-2476', dialString:'7602202476' },
+  { id:'sbcl037', name:'Mia Wrinkle',             role:'US Technologist',                 display:'951-529-8529', dialString:'9515298529' },
+  /* Nuclear Medicine */
+  { id:'sbcl038', name:'Nenita Mendoza',          role:'NM Technologist',                 display:'909-289-7937', dialString:'9092897937' },
+  { id:'sbcl039', name:'Justin Komenkul',         role:'NM Technologist',                 display:'951-442-9608', dialString:'9514429608' },
+  { id:'sbcl040', name:'Freddy Ruiz',             role:'NM Technologist',                 display:'951-347-4006', dialString:'9513474006' },
+  /* Special Procedure */
+  { id:'sbcl041', name:'Roza Ali-Lewis',          role:'Special Procedure Tech',          display:'909-496-1232', dialString:'9094961232' },
+  { id:'sbcl042', name:'Sitha Ath',               role:'Special Procedure Tech',          display:'909-213-7657', dialString:'9092137657' },
+  { id:'sbcl043', name:'Brian Soria',             role:'Special Procedure Tech',          display:'909-449-9909', dialString:'9094499909' },
+  { id:'sbcl044', name:'Prince Tshuma',           role:'Special Procedure Tech',          display:'909-534-3010', dialString:'9095343010' },
+  /* Diagnostic Technologists */
+  { id:'sbcl045', name:'Elvis Akoto',             role:'Diagnostic Technologist',         display:'909-834-9055', dialString:'9098349055' },
+  { id:'sbcl046', name:'Ashley Ali',              role:'Diagnostic Technologist',         display:'909-912-9465', dialString:'9099129465' },
+  { id:'sbcl047', name:'Michelle Baeza',          role:'Diagnostic Technologist',         display:'909-906-8464', dialString:'9099068464' },
+  { id:'sbcl048', name:'De Anna Bartley',         role:'Diagnostic Technologist',         display:'909-264-4385', dialString:'9092644385' },
+  { id:'sbcl049', name:'Fabian Cano',             role:'Diagnostic Technologist',         display:'909-708-9862', dialString:'9097089862' },
+  { id:'sbcl050', name:'Mandy Gettman',           role:'Diagnostic Technologist',         display:'909-647-7738', dialString:'9096477738' },
+  { id:'sbcl051', name:'Domingo Huipe',           role:'Diagnostic Technologist',         display:'951-312-3314', dialString:'9513123314' },
+  { id:'sbcl052', name:'Dale Jabonillo',          role:'Diagnostic Technologist',         display:'909-239-6423', dialString:'9092396423' },
+  { id:'sbcl053', name:'Betsy Kerns',             role:'Diagnostic Technologist',         display:'909-522-0717', dialString:'9095220717' },
+  { id:'sbcl054', name:'Traci McDaniel',          role:'Diagnostic Technologist',         display:'909-645-9884', dialString:'9096459884' },
+  { id:'sbcl055', name:'Andrea Nielsen',          role:'Diagnostic Technologist',         display:'909-472-9444', dialString:'9094729444' },
+  { id:'sbcl056', name:'Oko Okorie',              role:'Diagnostic Technologist',         display:'909-232-6404', dialString:'9092326404' },
+  { id:'sbcl057', name:'Julie-Maree Popescu',     role:'Diagnostic Technologist',         display:'909-492-4081', dialString:'9094924081' },
+  { id:'sbcl058', name:'Julyanna Rios',           role:'Diagnostic Technologist',         display:'626-264-2269', dialString:'6262642269' },
+  { id:'sbcl059', name:'Alexis Ritunban',         role:'Diagnostic Technologist',         display:'909-677-6742', dialString:'9096776742' },
+  { id:'sbcl060', name:'Roy Rud',                 role:'Diagnostic Technologist',         display:'909-362-1280', dialString:'9093621280' },
+  { id:'sbcl061', name:'Billie Smith',            role:'Diagnostic Technologist',         display:'909-520-9031', dialString:'9095209031' },
+  { id:'sbcl062', name:'Shelly Wilson',           role:'Diagnostic Technologist',         display:'209-628-5416', dialString:'2096285416' },
+  /* Radiology Assistants */
+  { id:'sbcl063', name:'James Bengtson',          role:'Radiology Assistant',             display:'951-323-3913', dialString:'9513233913' },
+  { id:'sbcl064', name:'Pete Cortez',             role:'Radiology Assistant',             display:'909-499-3518', dialString:'9094993518' },
+  { id:'sbcl065', name:'Steven Cortez',           role:'Radiology Assistant',             display:'909-965-3438', dialString:'9099653438' },
+  { id:'sbcl066', name:'Jesus Hernandez',         role:'Radiology Assistant',             display:'951-241-4932', dialString:'9512414932' },
+  { id:'sbcl067', name:'Chris Lopez',             role:'Radiology Assistant',             display:'951-407-3300', dialString:'9514073300' },
+  { id:'sbcl068', name:'Hector Marcelo',          role:'Radiology Assistant',             display:'310-290-6730', dialString:'3102906730' },
+  { id:'sbcl069', name:'Jacqueline Martinez-Valdez', role:'Radiology Assistant',          display:'951-663-5827', dialString:'9516635827' },
+  { id:'sbcl070', name:'Michelle Paramo',         role:'Radiology Assistant',             display:'909-827-6708', dialString:'9098276708' },
+  { id:'sbcl071', name:'Mike Sandoval',           role:'Radiology Assistant',             display:'909-927-1637', dialString:'9099271637' },
+  { id:'sbcl072', name:'Stephanie Schnabel',      role:'Radiology Assistant',             display:'951-836-9998', dialString:'9518369998' },
+  { id:'sbcl073', name:'Justin Smith',            role:'Radiology Assistant',             display:'909-961-3509', dialString:'9099613509' },
+  { id:'sbcl074', name:'Austin Soria',            role:'Radiology Assistant',             display:'909-687-9071', dialString:'9096879071' },
+  { id:'sbcl075', name:'Rebekah Teal',            role:'Radiology Assistant',             display:'760-686-4864', dialString:'7606864864' },
+  /* Schedulers */
+  { id:'sbcl076', name:'Jenny Barraza',           role:'Imaging Scheduler',               display:'279-465-5530', dialString:'2794655530' },
+  { id:'sbcl077', name:'Amelia Santamaria',       role:'Imaging Scheduler',               display:'951-255-4011', dialString:'9512554011' },
+  { id:'sbcl078', name:'Sandy Sayegh',            role:'Imaging Scheduler',               display:'480-529-8968', dialString:'4805298968' },
+  { id:'sbcl079', name:'Joel Wills',              role:'Office Assistant',                display:'760-552-1145', dialString:'7605521145' },
+  /* IR Nurses */
+  { id:'sbcl080', name:'Deb Howard',              role:'IR Nurse',                        display:'951-966-8537', dialString:'9519668537' },
+  { id:'sbcl081', name:'Danny Lopez',             role:'IR Nurse',                        display:'951-902-5744', dialString:'9519025744' },
+  { id:'sbcl082', name:'Patrick Marcos',          role:'IR Nurse',                        display:'408-838-5400', dialString:'4088385400' },
+  { id:'sbcl083', name:'Rima Sagala',             role:'IR Nurse',                        display:'909-908-4021', dialString:'9099084021' },
+  { id:'sbcl084', name:'Freddie Valenzuela',      role:'IR Nurse',                        display:'909-730-5349', dialString:'9097305349' },
+  { id:'sbcl085', name:'Jon Weaver',              role:'IR Nurse',                        display:'909-435-6423', dialString:'9094356423' },
+  /* Radiologists (Envision Health) */
+  { id:'sbcl086', name:'Shahnawaz Ansari, MD',    role:'Radiologist – Envision',          display:'858-212-4009', dialString:'8582124009' },
+  { id:'sbcl087', name:'Alaa Beydoun, MD',        role:'Radiologist – Envision',          display:'949-334-7237', dialString:'9493347237' },
+  { id:'sbcl088', name:'Tammam Beydoun, MD',      role:'Radiologist – Envision',          display:'949-331-6677', dialString:'9493316677' },
+  { id:'sbcl089', name:'Khalid Saleh, MD',        role:'Radiologist – Envision',          display:'601-667-7428', dialString:'6016677428' },
+  { id:'sbcl090', name:'Omar Saleh, MD',          role:'Radiologist – Envision',          display:'601-918-3286', dialString:'6019183286' },
+  { id:'sbcl091', name:'Fred Shu, MD',            role:'Radiologist – Envision',          display:'951-897-0063', dialString:'9518970063' },
+];
+
+const STM_IMAGING = {
+  id: 'stm-imaging',
+  name: 'Imaging',
+  entries: [
+    { id:'stmi01', label:'Front Desk',                    display:'760-242-2311 x4500#', dialString:'7602422311,,4500%23' },
+    { id:'stmi02', label:'Cardio Neuro',                  display:'760-242-2311 x6050#', dialString:'7602422311,,6050%23' },
+    { id:'stmi03', label:'Cath Lab',                      display:'760-242-2311 x5224#', dialString:'7602422311,,5224%23' },
+    { id:'stmi04', label:'Holding Room',                  display:'760-242-2311 x3843#', dialString:'7602422311,,3843%23' },
+    { id:'stmi05', label:'IR Nurse Office (Line 1)',       display:'760-242-2311 x4583#', dialString:'7602422311,,4583%23' },
+    { id:'stmi06', label:'IR Nurse Office (Line 2)',       display:'760-242-2311 x4584#', dialString:'7602422311,,4584%23' },
+    { id:'stmi07', label:'Nuc Med (Line 2)',               display:'760-242-2311 x4522#', dialString:'7602422311,,4522%23' },
+    { id:'stmi08', label:'Procedure Room 5',               display:'760-242-2311 x4547#', dialString:'7602422311,,4547%23' },
+    { id:'stmi09', label:'Scheduling',                    display:'760-242-2311 x4545#', dialString:'7602422311,,4545%23' },
+    { id:'stmi10', label:'Scheduling (Cecilia)',           display:'760-242-2311 x4542#', dialString:'7602422311,,4542%23' },
+    { id:'stmi11', label:'Ultrasound Room 2',              display:'760-242-2311 x4529#', dialString:'7602422311,,4529%23' },
+    { id:'stmi12', label:'Ultrasound Room 3',              display:'760-242-2311 x4557#', dialString:'7602422311,,4557%23' },
+    { id:'stmi13', label:'X-ray Workroom (2)',             display:'760-242-2311 x4523#', dialString:'7602422311,,4523%23' },
+    { id:'stmi14', label:'Director (Lisa)',                display:'760-242-2311 x4533#', dialString:'7602422311,,4533%23' },
+    { id:'stmi15', label:'Supervisor (Eddy)',              display:'760-242-2311 x4572#', dialString:'7602422311,,4572%23' },
+    { id:'stmi16', label:'Supervisor (Regina)',            display:'760-242-2311 x4543#', dialString:'7602422311,,4543%23' },
+    { id:'stmi17', label:'Supervisor (Stephanie)',         display:'760-242-2311 x8815#', dialString:'7602422311,,8815%23' },
+    { id:'stmi18', label:'Supervisor (Maribel)',           display:'760-242-2311 x4549#', dialString:'7602422311,,4549%23' },
+    { id:'stmi19', label:'Denise – Cath Lab',              display:'760-242-2311 x8156#', dialString:'7602422311,,8156%23', note:'For ordering when Cecelia is out' },
+    { id:'stmi20', label:'Dr. Gad (Radiologist)',          display:'760-242-2311 x4512#', dialString:'7602422311,,4512%23' },
+    { id:'stmi21', label:'Dr. LeBeau (Radiologist)',       display:'760-242-2311 x4537#', dialString:'7602422311,,4537%23' },
+  ]
+};
+
+const STM_NURSING_UNITS = {
+  id: 'stm-units',
+  name: 'Nursing Units',
+  entries: [
+    { id:'stmu01', label:'South ICU (Beds 1-14)',          display:'760-242-2311 x5130#', dialString:'7602422311,,5130%23' },
+    { id:'stmu02', label:'North ICU (Beds 15-20)',         display:'760-242-2311 x5100#', dialString:'7602422311,,5100%23' },
+    { id:'stmu03', label:'NICU',                           display:'760-242-2311 x5025#', dialString:'7602422311,,5025%23' },
+    { id:'stmu04', label:'East Tele (201-220)',            display:'760-242-2311 x5400#', dialString:'7602422311,,5400%23' },
+    { id:'stmu05', label:'West Tele (221-241)',            display:'760-242-2311 x5500#', dialString:'7602422311,,5500%23' },
+    { id:'stmu06', label:'North Tele (193, 247-256)',      display:'760-242-2311 x5520#', dialString:'7602422311,,5520%23' },
+    { id:'stmu07', label:'Peds Tele (EMG 31-36)',          display:'760-242-2311 x5520#', dialString:'7602422311,,5520%23' },
+    { id:'stmu08', label:'Northeast Tele (275-285)',       display:'760-242-2311 x5450#', dialString:'7602422311,,5450%23' },
+    { id:'stmu09', label:'4 Corners (189-246)',            display:'760-242-2311 x4242#', dialString:'7602422311,,4242%23' },
+    { id:'stmu10', label:'Med Surg (195-274)',             display:'760-242-2311 x5383#', dialString:'7602422311,,5383%23' },
+    { id:'stmu11', label:'L&D',                           display:'760-242-2311 x5000#', dialString:'7602422311,,5000%23' },
+    { id:'stmu12', label:'Post Partum (286-294)',          display:'760-242-2311 x5006#', dialString:'7602422311,,5006%23' },
+  ]
+};
+
+const STM_CLINICAL_DEPTS = {
+  id: 'stm-clinical',
+  name: 'Clinical Departments',
+  entries: [
+    { id:'stmc01', label:'GI Lab',                        display:'760-242-2311 x5219#', dialString:'7602422311,,5219%23' },
+    { id:'stmc02', label:'OPS',                           display:'760-242-2311 x5220#', dialString:'7602422311,,5220%23' },
+    { id:'stmc03', label:'OR',                            display:'760-242-2311 x5200#', dialString:'7602422311,,5200%23' },
+    { id:'stmc04', label:'PACU / Recovery',               display:'760-242-2311 x5205#', dialString:'7602422311,,5205%23' },
+    { id:'stmc05', label:'Physical Therapy',              display:'760-242-2311 x4650#', dialString:'7602422311,,4650%23' },
+    { id:'stmc06', label:'Respiratory',                   display:'760-242-2311 x8106#', dialString:'7602422311,,8106%23' },
+    { id:'stmc07', label:'Lab',                           display:'760-242-2311 x4600#', dialString:'7602422311,,4600%23' },
+    { id:'stmc08', label:'Admitting',                     display:'760-242-2311 x600#',  dialString:'7602422311,,600%23' },
+    { id:'stmc09', label:'Central Supply',                display:'760-242-2311 x5351#', dialString:'7602422311,,5351%23' },
+    { id:'stmc10', label:'Employee Health',               display:'760-242-2311 x8219#', dialString:'7602422311,,8219%23' },
+    { id:'stmc11', label:'Engineering',                   display:'760-242-2311 x8196#', dialString:'7602422311,,8196%23' },
+    { id:'stmc12', label:'EVS (Line 1)',                  display:'760-242-2311 x4681#', dialString:'7602422311,,4681%23' },
+    { id:'stmc13', label:'EVS (Line 2)',                  display:'760-242-2311 x4675#', dialString:'7602422311,,4675%23' },
+    { id:'stmc14', label:'House Shift',                   display:'760-242-2311 x8171#', dialString:'7602422311,,8171%23' },
+    { id:'stmc15', label:'HR',                            display:'760-242-2311 x8270#', dialString:'7602422311,,8270%23' },
+    { id:'stmc16', label:'IT',                            display:'760-242-2311 x8199#', dialString:'7602422311,,8199%23' },
+    { id:'stmc17', label:'IT (Eric)',                     display:'760-242-2311 x6116#', dialString:'7602422311,,6116%23' },
+    { id:'stmc18', label:'Security',                      display:'760-242-2311 x6560#', dialString:'7602422311,,6560%23' },
+    { id:'stmc19', label:'Biomed',                        display:'760-242-2311 x8878#', dialString:'7602422311,,8878%23' },
+    { id:'stmc20', label:'Spanish Interpreter (Maria)',   display:'760-241-3306',         dialString:'7602413306' },
+  ]
+};
+
+const STM_CLINICIANS = [
+  /* Emergency Physicians */
+  { id:'stmcl001', name:'Franklin Alconcel, DO',       role:'Emergency Physician', display:'760-803-8807', dialString:'7608038807' },
+  { id:'stmcl002', name:'Sumit Arora, MD',             role:'Emergency Physician', display:'714-609-2470', dialString:'7146092470' },
+  { id:'stmcl003', name:'Akachi Azubuike, MD',         role:'Emergency Physician', display:'909-217-5427', dialString:'9092175427' },
+  { id:'stmcl004', name:'Sean Barkan, MD',             role:'Emergency Physician', display:'847-962-1115', dialString:'8479621115' },
+  { id:'stmcl005', name:'Franz Bolowich, DO',          role:'Emergency Physician', display:'760-401-2459', dialString:'7604012459' },
+  { id:'stmcl006', name:'Chun Chang, MD',              role:'Emergency Physician', display:'925-980-9126', dialString:'9259809126' },
+  { id:'stmcl007', name:'Ramandeep Dhillon, MD',       role:'Emergency Physician', display:'949-275-1997', dialString:'9492751997' },
+  { id:'stmcl008', name:'Ali Ebrahim, MD',             role:'Emergency Physician', display:'760-524-6384', dialString:'7605246384' },
+  { id:'stmcl009', name:'H. Steven Lin, MD',           role:'Emergency Physician', display:'760-845-8624', dialString:'7608458624' },
+  { id:'stmcl010', name:'Michael Manolescu, MD',       role:'Emergency Physician', display:'213-304-3759', dialString:'2133043759' },
+  { id:'stmcl011', name:'Daniel Quion, MD',            role:'Emergency Physician', display:'760-403-8325', dialString:'7604038325' },
+  { id:'stmcl012', name:'Robert Wetherbee, MD',        role:'Emergency Physician', display:'617-899-0621', dialString:'6178990621' },
+  { id:'stmcl013', name:'John Yashou, DO',             role:'Emergency Physician', display:'760-813-6122', dialString:'7608136122' },
+  /* Advanced Providers */
+  { id:'stmcl014', name:'Robert Bessler, PA',          role:'Advanced Provider',   display:'951-264-8058', dialString:'9512648058' },
+  { id:'stmcl015', name:'Taylor Boyd, PA',             role:'Advanced Provider',   display:'714-616-6694', dialString:'7146166694' },
+  { id:'stmcl016', name:'Danielle Brasher, PA',        role:'Advanced Provider',   display:'925-917-9442', dialString:'9259179442' },
+  { id:'stmcl017', name:'Joseph Casas, PA',            role:'Advanced Provider',   display:'909-499-0579', dialString:'9094990579' },
+  { id:'stmcl018', name:'Cody Donahue, PA',            role:'Advanced Provider',   display:'949-680-7097', dialString:'9496807097' },
+  { id:'stmcl019', name:'Steven Heverly, PA',          role:'Advanced Provider',   display:'951-790-8051', dialString:'9517908051' },
+  { id:'stmcl020', name:'Shalechia Hunt, PA',          role:'Advanced Provider',   display:'760-900-3388', dialString:'7609003388' },
+  { id:'stmcl021', name:'Elda Ilia, PA',               role:'Advanced Provider',   display:'940-594-5137', dialString:'9405945137' },
+  { id:'stmcl022', name:'Phoudong Keovilay, PA',       role:'Advanced Provider',   display:'559-430-5280', dialString:'5594305280' },
+  { id:'stmcl023', name:'Daniel Loera, PA',            role:'Advanced Provider',   display:'909-714-5106', dialString:'9097145106' },
+  { id:'stmcl024', name:'Patrick McGrath, PA',         role:'Advanced Provider',   display:'951-334-6569', dialString:'9513346569' },
+  { id:'stmcl025', name:"Chere O'Grady, PA",           role:'Advanced Provider',   display:'760-217-2533', dialString:'7602172533' },
+  { id:'stmcl026', name:'Suzanne Percival-Pacini, PA', role:'Advanced Provider',   display:'760-220-4010', dialString:'7602204010' },
+  { id:'stmcl027', name:'Ashley Rugge, PA',            role:'Advanced Provider',   display:'760-662-0922', dialString:'7606620922' },
+  { id:'stmcl028', name:'Anna Sims, PA',               role:'Advanced Provider',   display:'404-444-0756', dialString:'4044440756' },
+  { id:'stmcl029', name:'Keiana Skinner, PA',          role:'Advanced Provider',   display:'865-809-9484', dialString:'8658099484' },
+  { id:'stmcl030', name:'Adam Stawniczy, PA',          role:'Advanced Provider',   display:'909-754-8209', dialString:'9097548209' },
+  { id:'stmcl031', name:'Phillip Suh, PA',             role:'Advanced Provider',   display:'909-855-2443', dialString:'9098552443' },
+  { id:'stmcl032', name:'John Tarnowski, PA',          role:'Advanced Provider',   display:'650-338-6370', dialString:'6503386370' },
+  { id:'stmcl033', name:'Nidia Torres, NP',            role:'Advanced Provider',   display:'909-234-0332', dialString:'9092340332' },
+  { id:'stmcl034', name:'Vishal Verma, PA',            role:'Advanced Provider',   display:'562-303-2073', dialString:'5623032073' },
+  { id:'stmcl035', name:'Craig Wood, PA',              role:'Advanced Provider',   display:'760-580-2695', dialString:'7605802695' },
+];
+
+</script>
+<script type="text/babel" data-presets="react-classic">
+const { useState, useEffect, useCallback, useRef } = React;
+
+/* ── Helpers ─────────────────────────────────────────── */
+const uid = () => Math.random().toString(36).slice(2, 9);
+const COLORS = ['#007AFF','#34C759','#FF9500','#FF3B30','#AF52DE','#FF2D55','#5AC8FA','#FFCC00','#00C7BE'];
+
+/* ── RCH Clinicians (auto-generated) ── */
+/* ── Default Data ────────────────────────────────────── */
+const DEFAULT_HOSPITALS = [
+  {
+    id: 'chsb',
+    name: 'CHSB',
+    fullName: 'Community Hospital San Bernardino',
+    color: '#007AFF',
+    categories: [
+      {
+        id: 'chsb-dept',
+        name: 'Departments',
+        entries: [
+          { id: uid(), label: 'Main Line',        display: '909-887-6333 → 9',    dialString: '9098876333,,9',         note: 'Press 9 when connected' },
+          { id: uid(), label: 'ER',               display: '909-887-6333 x33552', dialString: '9098876333,,9,,33552' },
+          { id: uid(), label: 'X-ray (Line 1)',   display: '909-887-6333 x37165', dialString: '9098876333,,9,,37165' },
+          { id: uid(), label: 'X-ray (Line 2)',   display: '909-887-6333 x37169', dialString: '9098876333,,9,,37169' },
+          { id: uid(), label: 'CT',               display: '909-887-6333 x61678', dialString: '9098876333,,9,,61678' },
+          { id: uid(), label: 'US',               display: '909-887-6333 x37180', dialString: '9098876333,,9,,37180' },
+          { id: uid(), label: 'ICU',              display: '909-887-6333 x33310', dialString: '9098876333,,9,,33310' },
+        ]
+      },
+      CHSB_HOSPITAL_UNITS
+    ],
+    clinicians: []
+  },
+  {
+    id: 'sb',
+    name: 'SB',
+    fullName: 'St. Bernardine Medical Center',
+    color: '#34C759',
+    categories: [
+      {
+        id: 'sb-dept',
+        name: 'Departments',
+        entries: [
+          { id: uid(), label: 'Main Line',            display: '909-883-8711 → 2',    dialString: '9098838711,,2',         note: 'Press 2 when connected' },
+          { id: uid(), label: 'ER',                   display: '909-883-8711 x23364', dialString: '9098838711,,2,,23364' },
+          { id: uid(), label: 'X-ray',                display: '909-883-8711 x23995', dialString: '9098838711,,2,,23995' },
+          { id: uid(), label: 'CT',                   display: '909-883-8711 x23649', dialString: '9098838711,,2,,23649' },
+          { id: uid(), label: 'US',                   display: '909-883-8711 x23651', dialString: '9098838711,,2,,23651' },
+          { id: uid(), label: 'NM',                   display: '909-883-8711 x23683', dialString: '9098838711,,2,,23683' },
+          { id: uid(), label: 'ICU',                  display: '909-883-8711 → 2',    dialString: '9098838711,,2',         note: 'Ask operator for ICU' },
+          { id: uid(), label: 'Daniel (IT Support)',  display: '909-883-8711 x52569', dialString: '9098838711,,2,,52569' },
+        ]
+      },
+      SB_HOSPITAL_UNITS,
+      SB_UNIT_EXTENSIONS,
+      SB_IMAGING_SERVICES,
+      SB_CLINICAL_DEPTS
+    ],
+    clinicians: SB_CLINICIANS
+  },
+  {
+    id: 'rch',
+    name: 'RCH',
+    fullName: 'Redlands Community Hospital',
+    color: '#FF9500',
+    categories: [],
+    clinicians: RCH_CLINICIANS
+  },
+  {
+    id: 'stm',
+    name: 'STM',
+    fullName: 'St. Mary Medical Center',
+    color: '#FF3B30',
+    categories: [
+      {
+        id: 'stm-ed',
+        name: 'Emergency Department',
+        entries: [
+          { id: uid(), label: 'ED Main Line 1',         display: '760-946-8128', dialString: '7609468128' },
+          { id: uid(), label: 'ED Main Line 2',         display: '760-946-8150', dialString: '7609468150' },
+          { id: uid(), label: 'ED Team Leader Nurse 1', display: '760-987-8762', dialString: '7609878762' },
+          { id: uid(), label: 'ED Team Leader Nurse 2', display: '442-438-4136', dialString: '4424384136' },
+          { id: uid(), label: 'Trauma Cell Phone',      display: '909-435-5413', dialString: '9094355413' },
+        ]
+      },
+      {
+        id: 'stm-dept',
+        name: 'Departments',
+        entries: [
+          { id: uid(), label: 'CT',    display: '760-242-2311 x4515#', dialString: '7602422311,,4515%23', note: 'Main → pause → ext 4515#' },
+          { id: uid(), label: 'MRI',   display: '760-242-2311 x4550#', dialString: '7602422311,,4550%23', note: 'Main → pause → ext 4550#' },
+          { id: uid(), label: 'X-Ray', display: '760-242-2311 x4505#', dialString: '7602422311,,4505%23', note: 'Main → pause → ext 4505#' },
+          { id: uid(), label: 'US',    display: '760-242-2311 x4520#', dialString: '7602422311,,4520%23', note: 'Main → pause → ext 4520#' },
+          { id: uid(), label: 'NM',    display: '760-242-2311 x4519#', dialString: '7602422311,,4519%23', note: 'Main → pause → ext 4519#' },
+        ]
+      },
+      STM_IMAGING,
+      STM_NURSING_UNITS,
+      STM_CLINICAL_DEPTS
+    ],
+    clinicians: STM_CLINICIANS
+  }
+];
+
+/* ── PhoneLink ────────────────────────────────────────── */
+const PhoneLink = ({ dialString, display }) => (
+  <a
+    href={`tel:${dialString}`}
+    className="phone-link"
+    onClick={e => e.stopPropagation()}
+    title={`Tap to call — dials: ${dialString}`}
+  >
+    <span className="phone-icon">📞</span>
+    <span>{display || dialString}</span>
+  </a>
+);
+
+/* ── Toast ───────────────────────────────────────────── */
+const Toast = ({ msg }) => <div className="toast">{msg}</div>;
+
+/* ── Modal Sheet ─────────────────────────────────────── */
+const Modal = ({ title, onClose, children }) => (
+  <div className="overlay" onClick={onClose}>
+    <div className="sheet" onClick={e => e.stopPropagation()}>
+      <div className="sheet-handle" />
+      <div className="sheet-header">
+        <span className="sheet-title">{title}</span>
+        <button className="sheet-close" onClick={onClose}>✕</button>
+      </div>
+      <div className="sheet-body">{children}</div>
+    </div>
+  </div>
+);
+
+/* ── Entry Form ──────────────────────────────────────── */
+const EntryForm = ({ initial = {}, onSave, onDelete, onClose }) => {
+  const [label,      setLabel]      = useState(initial.label      || '');
+  const [display,    setDisplay]    = useState(initial.display    || '');
+  const [dialString, setDialString] = useState(initial.dialString || '');
+  const [note,       setNote]       = useState(initial.note       || '');
+  const valid = label.trim() && dialString.trim();
+  const save = () => {
+    if (!valid) return;
+    onSave({ label: label.trim(), display: display.trim() || dialString.trim(), dialString: dialString.trim(), note: note.trim() });
+    onClose();
+  };
+  return (
+    <>
+      <div className="fg">
+        <label className="fl">Label *</label>
+        <input className="fi" value={label} onChange={e => setLabel(e.target.value)} placeholder="e.g. CT, ER, Dr. Smith" autoFocus />
+      </div>
+      <div className="fg">
+        <label className="fl">Display Number</label>
+        <input className="fi" value={display} onChange={e => setDisplay(e.target.value)} placeholder="e.g. 909-887-6333 x61678" />
+        <p className="fhint">Formatted label shown on screen. Defaults to dial string if blank.</p>
+      </div>
+      <div className="fg">
+        <label className="fl">Dial String *</label>
+        <input className="fi" value={dialString} onChange={e => setDialString(e.target.value)} placeholder="e.g. 9098876333,,9,,61678" inputMode="tel" />
+        <p className="fhint">
+          💡 <strong>Commas = 2-sec pauses.</strong><br />
+          <strong>9098876333,,9,,61678</strong> → dials main, waits, presses 9, waits, dials ext.<br />
+          Use <strong>%23</strong> instead of # (e.g. <strong>7602422311,,4515%23</strong>).
+        </p>
+      </div>
+      <div className="fg">
+        <label className="fl">Note (optional)</label>
+        <input className="fi" value={note} onChange={e => setNote(e.target.value)} placeholder="e.g. Ask operator for ICU" />
+      </div>
+      <button className="btn-save" onClick={save} disabled={!valid}>{initial.id ? 'Save Changes' : 'Add Number'}</button>
+      {initial.id && <button className="btn-del" onClick={() => { onDelete(); onClose(); }}>Delete Entry</button>}
+    </>
+  );
+};
+
+/* ── Category Form ───────────────────────────────────── */
+const CategoryForm = ({ initial = {}, onSave, onDelete, onClose }) => {
+  const [name, setName] = useState(initial.name || '');
+  return (
+    <>
+      <div className="fg">
+        <label className="fl">Category Name *</label>
+        <input className="fi" value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Departments, After Hours" autoFocus />
+      </div>
+      <button className="btn-save" onClick={() => { if (name.trim()) { onSave(name.trim()); onClose(); } }} disabled={!name.trim()}>
+        {initial.id ? 'Save Changes' : 'Add Category'}
+      </button>
+      {initial.id && <button className="btn-del" onClick={() => { onDelete(); onClose(); }}>Delete Category</button>}
+    </>
+  );
+};
+
+/* ── Hospital Form ───────────────────────────────────── */
+const HospitalForm = ({ initial = {}, isNew, onSave, onDelete, onClose }) => {
+  const [name,     setName]     = useState(initial.name     || '');
+  const [fullName, setFullName] = useState(initial.fullName || '');
+  const [color,    setColor]    = useState(initial.color    || '#007AFF');
+  return (
+    <>
+      <div className="fg">
+        <label className="fl">Short Name *</label>
+        <input className="fi" value={name} onChange={e => setName(e.target.value.toUpperCase().slice(0,6))} placeholder="e.g. RCH" style={{textTransform:'uppercase'}} autoFocus />
+      </div>
+      <div className="fg">
+        <label className="fl">Full Name</label>
+        <input className="fi" value={fullName} onChange={e => setFullName(e.target.value)} placeholder="e.g. Redlands Community Hospital" />
+      </div>
+      <div className="fg">
+        <label className="fl">Color</label>
+        <div className="swatches">
+          {COLORS.map(c => (
+            <div key={c} className={`swatch${color===c?' sel':''}`} style={{background:c,'--c':c}} onClick={() => setColor(c)} />
+          ))}
+        </div>
+      </div>
+      <button className="btn-save" onClick={() => { if (name.trim()) { onSave({name:name.trim(),fullName:fullName.trim(),color}); onClose(); } }} disabled={!name.trim()}>
+        {isNew ? 'Add Hospital' : 'Save Changes'}
+      </button>
+      {!isNew && onDelete && <button className="btn-del" onClick={() => { onDelete(); onClose(); }}>Remove Hospital</button>}
+    </>
+  );
+};
+
+/* ── Clinician Form ──────────────────────────────────── */
+const ClinicianForm = ({ initial = {}, onSave, onDelete, onClose }) => {
+  const [name,       setName]       = useState(initial.name       || '');
+  const [role,       setRole]       = useState(initial.role       || '');
+  const [display,    setDisplay]    = useState(initial.display    || '');
+  const [dialString, setDialString] = useState(initial.dialString || '');
+  const valid = name.trim() && dialString.trim();
+  const save = () => {
+    if (!valid) return;
+    onSave({ name: name.trim(), role: role.trim(), display: display.trim() || dialString.trim(), dialString: dialString.trim() });
+    onClose();
+  };
+  return (
+    <>
+      <div className="fg">
+        <label className="fl">Name *</label>
+        <input className="fi" value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Dr. Smith" autoFocus />
+      </div>
+      <div className="fg">
+        <label className="fl">Role / Specialty</label>
+        <input className="fi" value={role} onChange={e => setRole(e.target.value)} placeholder="e.g. Radiologist, Fellow" />
+      </div>
+      <div className="fg">
+        <label className="fl">Display Number</label>
+        <input className="fi" value={display} onChange={e => setDisplay(e.target.value)} placeholder="e.g. 909-887-6333 x37300" />
+      </div>
+      <div className="fg">
+        <label className="fl">Dial String *</label>
+        <input className="fi" value={dialString} onChange={e => setDialString(e.target.value)} placeholder="e.g. 9098876333,,37300" inputMode="tel" />
+        <p className="fhint">💡 Use commas for 2-sec pauses when dialing extensions</p>
+      </div>
+      <button className="btn-save" onClick={save} disabled={!valid}>{initial.id ? 'Save Changes' : 'Add Clinician'}</button>
+      {initial.id && <button className="btn-del" onClick={() => { onDelete(); onClose(); }}>Delete Clinician</button>}
+    </>
+  );
+};
+
+/* ── Entry Row ───────────────────────────────────────── */
+const EntryRow = ({ entry, onEdit, onDelete, onCopy }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="entry-row">
+      <div className="entry-main" onClick={() => setOpen(o => !o)}>
+        <div className="entry-label">
+          {entry.label}
+          {entry.note && <div className="entry-sub">{entry.note}</div>}
+        </div>
+        <PhoneLink dialString={entry.dialString} display={entry.display} />
+      </div>
+      {open && (
+        <div className="entry-actions">
+          <button className="act-btn copy" onClick={() => { onCopy(entry); setOpen(false); }}>📋 Copy</button>
+          <button className="act-btn edit" onClick={() => { onEdit(entry); setOpen(false); }}>✏️ Edit</button>
+          <button className="act-btn del"  onClick={() => { onDelete(entry.id); setOpen(false); }}>🗑️ Delete</button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ── Category Card ───────────────────────────────────── */
+const CategoryCard = ({ hosp, cat, onUpdateHosp, onCopy }) => {
+  const [entModal, setEntModal] = useState(null);
+  const [catModal, setCatModal] = useState(false);
+
+  const updEntry = (data, id) => onUpdateHosp({
+    ...hosp, categories: hosp.categories.map(c =>
+      c.id !== cat.id ? c : {
+        ...c,
+        entries: id
+          ? c.entries.map(e => e.id === id ? { ...e, ...data } : e)
+          : [...c.entries, { id: uid(), ...data }]
+      }
+    )
+  });
+  const delEntry = id => onUpdateHosp({
+    ...hosp, categories: hosp.categories.map(c =>
+      c.id !== cat.id ? c : { ...c, entries: c.entries.filter(e => e.id !== id) }
+    )
+  });
+  const updCat = name => onUpdateHosp({
+    ...hosp, categories: hosp.categories.map(c => c.id === cat.id ? { ...c, name } : c)
+  });
+  const delCat = () => onUpdateHosp({
+    ...hosp, categories: hosp.categories.filter(c => c.id !== cat.id)
+  });
+
+  return (
+    <div className="card">
+      <div className="card-header">
+        <span className="card-title">{cat.name}</span>
+        <div className="card-actions">
+          <button className="chip-btn" onClick={() => setEntModal({})}>+ Add</button>
+          <button className="chip-btn" onClick={() => setCatModal(true)}>Edit</button>
+        </div>
+      </div>
+      {cat.entries.map(e => (
+        <EntryRow key={e.id} entry={e} onEdit={setEntModal} onDelete={delEntry} onCopy={onCopy} />
+      ))}
+      {cat.entries.length === 0 && (
+        <div style={{padding:'14px 16px',textAlign:'center',color:'#8e8e93',fontSize:13}}>
+          No numbers yet — tap <strong>+ Add</strong> above
+        </div>
+      )}
+      {entModal !== null && (
+        <Modal title={entModal.id ? 'Edit Number' : 'Add Number'} onClose={() => setEntModal(null)}>
+          <EntryForm initial={entModal} onSave={d => updEntry(d, entModal.id)} onDelete={() => delEntry(entModal.id)} onClose={() => setEntModal(null)} />
+        </Modal>
+      )}
+      {catModal && (
+        <Modal title="Edit Category" onClose={() => setCatModal(false)}>
+          <CategoryForm initial={cat} onSave={updCat} onDelete={delCat} onClose={() => setCatModal(false)} />
+        </Modal>
+      )}
+    </div>
+  );
+};
+
+/* ── Numbers View ────────────────────────────────────── */
+const NumbersView = ({ hosp, onUpdateHosp, onCopy }) => {
+  const [addCat, setAddCat] = useState(false);
+  return (
+    <>
+      {hosp.categories.map(cat => (
+        <CategoryCard key={cat.id} hosp={hosp} cat={cat} onUpdateHosp={onUpdateHosp} onCopy={onCopy} />
+      ))}
+      {hosp.categories.length === 0 && (
+        <div className="empty">
+          <div className="empty-icon">📋</div>
+          <div className="empty-title">No Categories Yet</div>
+          <div className="empty-desc">Tap "+ Add Category" below to create your first section of numbers.</div>
+        </div>
+      )}
+      <div className="add-card" onClick={() => setAddCat(true)}>＋ Add Category</div>
+      {addCat && (
+        <Modal title="Add Category" onClose={() => setAddCat(false)}>
+          <CategoryForm onSave={name => { onUpdateHosp({ ...hosp, categories: [...hosp.categories, { id: uid(), name, entries: [] }] }); }} onClose={() => setAddCat(false)} />
+        </Modal>
+      )}
+    </>
+  );
+};
+
+/* ── Clinicians View ─────────────────────────────────── */
+const CliniciansView = ({ hosp, searchQ, onUpdateHosp, onCopy }) => {
+  const [modal, setModal] = useState(null);
+  const all  = hosp.clinicians || [];
+  const list = searchQ
+    ? all.filter(c => c.name.toLowerCase().includes(searchQ.toLowerCase()) || (c.role||'').toLowerCase().includes(searchQ.toLowerCase()))
+    : all;
+  const initials = n => n.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+
+  const save = (data, id) => onUpdateHosp({
+    ...hosp,
+    clinicians: id
+      ? all.map(c => c.id === id ? { ...c, ...data } : c)
+      : [...all, { id: uid(), ...data }]
+  });
+  const del = id => onUpdateHosp({ ...hosp, clinicians: all.filter(c => c.id !== id) });
+
+  return (
+    <>
+      <div className="card">
+        <div className="card-header">
+          <span className="card-title">Clinicians ({list.length})</span>
+          <button className="chip-btn" onClick={() => setModal({})}>+ Add</button>
+        </div>
+        {list.map(c => (
+          <div key={c.id} className="clin-row" onClick={() => setModal(c)}>
+            <div className="avatar" style={{ background: hosp.color + '22', color: hosp.color }}>
+              {initials(c.name)}
+            </div>
+            <div className="clin-info">
+              <div className="clin-name">{c.name}</div>
+              {c.role && <div className="clin-role">{c.role}</div>}
+            </div>
+            <PhoneLink dialString={c.dialString} display={c.display} />
+          </div>
+        ))}
+        {list.length === 0 && (
+          <div style={{padding:'14px 16px',textAlign:'center',color:'#8e8e93',fontSize:13}}>
+            {searchQ ? `No results for "${searchQ}"` : 'No clinicians yet — tap + Add above'}
+          </div>
+        )}
+      </div>
+      {modal !== null && (
+        <Modal title={modal.id ? 'Edit Clinician' : 'Add Clinician'} onClose={() => setModal(null)}>
+          <ClinicianForm
+            initial={modal}
+            onSave={data => { save(data, modal.id); setModal(null); }}
+            onDelete={() => { del(modal.id); setModal(null); }}
+            onClose={() => setModal(null)}
+          />
+        </Modal>
+      )}
+    </>
+  );
+};
+
+/* ── Search Results ──────────────────────────────────── */
+const SearchResults = ({ hospitals, query }) => {
+  const q    = query.toLowerCase();
+  const hits = [];
+  hospitals.forEach(h => {
+    h.categories.forEach(cat => {
+      cat.entries.forEach(e => {
+        if (
+          e.label.toLowerCase().includes(q) ||
+          (e.display||'').toLowerCase().includes(q) ||
+          (e.note||'').toLowerCase().includes(q)
+        ) hits.push({ ...e, hospName: h.name, hospColor: h.color, catName: cat.name });
+      });
+    });
+    (h.clinicians||[]).forEach(c => {
+      if (c.name.toLowerCase().includes(q) || (c.role||'').toLowerCase().includes(q))
+        hits.push({ id: c.id, label: c.name, note: c.role, display: c.display, dialString: c.dialString, hospName: h.name, hospColor: h.color, catName: 'Clinicians' });
+    });
+  });
+
+  return (
+    <>
+      <div className="sr-header">{hits.length} result{hits.length !== 1 ? 's' : ''} for "{query}"</div>
+      <div className="card">
+        {hits.length === 0 && (
+          <div style={{padding:'24px',textAlign:'center',color:'#8e8e93'}}>No results found</div>
+        )}
+        {hits.map((r, i) => (
+          <div key={i} className="entry-row">
+            <div className="entry-main">
+              <div className="entry-label">
+                {r.label}
+                <div className="entry-sub">
+                  <span className="hosp-pill" style={{background: r.hospColor}}>{r.hospName}</span>
+                  {r.catName}{r.note ? ` · ${r.note}` : ''}
+                </div>
+              </div>
+              <PhoneLink dialString={r.dialString} display={r.display} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+};
+
+/* ── App ─────────────────────────────────────────────── */
+const App = () => {
+  const [hospitals,  setHospitals]  = useState(() => {
+    try {
+      const s = localStorage.getItem('rad-cf-v2');
+      const base = s ? JSON.parse(s) : DEFAULT_HOSPITALS;
+      // Inject missing data for users with existing localStorage
+      return base.map(h => {
+        if (h.id === 'rch' && (!h.clinicians || h.clinicians.length < 100))
+          return { ...h, clinicians: RCH_CLINICIANS };
+        if (h.id === 'chsb' && !h.categories.find(c => c.id === 'chsb-units'))
+          return { ...h, categories: [...h.categories, CHSB_HOSPITAL_UNITS] };
+        if (h.id === 'stm') {
+          let cats = h.categories;
+          if (!cats.find(c => c.id === 'stm-imaging'))  cats = [...cats, STM_IMAGING];
+          if (!cats.find(c => c.id === 'stm-units'))    cats = [...cats, STM_NURSING_UNITS];
+          if (!cats.find(c => c.id === 'stm-clinical')) cats = [...cats, STM_CLINICAL_DEPTS];
+          const clins = (!h.clinicians || h.clinicians.length < 10) ? STM_CLINICIANS : h.clinicians;
+          return { ...h, categories: cats, clinicians: clins };
+        }
+        if (h.id === 'sb') {
+          let cats = h.categories;
+          if (!cats.find(c => c.id === 'sb-units'))     cats = [...cats, SB_HOSPITAL_UNITS];
+          if (!cats.find(c => c.id === 'sb-unit-ext'))  cats = [...cats, SB_UNIT_EXTENSIONS];
+          if (!cats.find(c => c.id === 'sb-imaging'))   cats = [...cats, SB_IMAGING_SERVICES];
+          if (!cats.find(c => c.id === 'sb-clinical'))  cats = [...cats, SB_CLINICAL_DEPTS];
+          const clins = (!h.clinicians || h.clinicians.length < 10) ? SB_CLINICIANS : h.clinicians;
+          return { ...h, categories: cats, clinicians: clins };
+        }
+        return h;
+      });
+    }
+    catch { return DEFAULT_HOSPITALS; }
+  });
+  const [activeTab,  setActiveTab]  = useState('chsb');
+  const [activeView, setActiveView] = useState('numbers');
+  const [searchQ,    setSearchQ]    = useState('');
+  const [toast,      setToast]      = useState(null);
+  const [editHosp,   setEditHosp]   = useState(null);
+  const [addHosp,    setAddHosp]    = useState(false);
+  const toastRef = useRef(null);
+
+  useEffect(() => {
+    localStorage.setItem('rad-cf-v2', JSON.stringify(hospitals));
+  }, [hospitals]);
+
+  const updateHosp   = useCallback(h => setHospitals(prev => prev.map(x => x.id === h.id ? h : x)), []);
+  const addHospital  = data => setHospitals(prev => [...prev, { id: uid(), categories: [], clinicians: [], ...data }]);
+  const editHospital = (id, data) => setHospitals(prev => prev.map(h => h.id === id ? { ...h, ...data } : h));
+  const delHospital  = id => {
+    setHospitals(prev => {
+      const next = prev.filter(h => h.id !== id);
+      if (activeTab === id) setActiveTab(next[0]?.id || '');
+      return next;
+    });
+  };
+
+  const showToast = msg => {
+    setToast(msg);
+    clearTimeout(toastRef.current);
+    toastRef.current = setTimeout(() => setToast(null), 2200);
+  };
+
+  const handleCopy = entry => {
+    const txt = entry.display || entry.dialString;
+    navigator.clipboard
+      ? navigator.clipboard.writeText(txt).then(() => showToast('📋 Copied: ' + txt)).catch(() => showToast('📋 Copied!'))
+      : showToast('📋 Copied: ' + txt);
+  };
+
+  const activeHosp  = hospitals.find(h => h.id === activeTab) || hospitals[0];
+  const isSearching = searchQ.trim().length > 0;
+
+  return (
+    <div style={{display:'flex',flexDirection:'column',height:'100%',background:'#f2f2f7'}}>
+
+      {/* Header */}
+      <div className="app-header">
+        <div className="header-top">
+          {isSearching ? (
+            <div className="header-title">
+              <span className="header-title-text">🔍 Search Results</span>
+            </div>
+          ) : activeHosp ? (
+            <div className="header-title">
+              <div className="header-badge" style={{background: activeHosp.color}}>{activeHosp.name}</div>
+              <span className="header-title-text">{activeHosp.fullName || activeHosp.name}</span>
+            </div>
+          ) : null}
+          <div className="header-actions">
+            {!isSearching && activeHosp && (
+              <button className="icon-btn" title="Edit hospital" onClick={() => setEditHosp(activeHosp)}>⚙️</button>
+            )}
+            <button className="icon-btn" title="Add hospital" onClick={() => setAddHosp(true)}>＋</button>
+          </div>
+        </div>
+
+        {/* Search */}
+        <div className="search-wrap">
+          <div className="search-inner">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+            </svg>
+            <input
+              className="search-input"
+              value={searchQ}
+              onChange={e => setSearchQ(e.target.value)}
+              placeholder="Search all hospitals…"
+            />
+            {searchQ && <button className="search-clear" onClick={() => setSearchQ('')}>✕</button>}
+          </div>
+        </div>
+
+        {/* Segment control */}
+        {!isSearching && (
+          <div className="segment-row">
+            <div className="segment-control">
+              <button className={`seg-btn${activeView==='numbers'?' active':''}`} onClick={() => setActiveView('numbers')}>📋 Numbers</button>
+              <button className={`seg-btn${activeView==='clinicians'?' active':''}`} onClick={() => setActiveView('clinicians')}>👤 Clinicians</button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="content">
+        {isSearching ? (
+          <SearchResults hospitals={hospitals} query={searchQ} />
+        ) : activeHosp ? (
+          activeView === 'numbers'
+            ? <NumbersView hosp={activeHosp} onUpdateHosp={updateHosp} onCopy={handleCopy} />
+            : <CliniciansView hosp={activeHosp} searchQ="" onUpdateHosp={updateHosp} onCopy={handleCopy} />
+        ) : (
+          <div className="empty">
+            <div className="empty-icon">🏥</div>
+            <div className="empty-title">No Hospitals</div>
+            <div className="empty-desc">Tap ＋ in the top right to add a hospital.</div>
+          </div>
+        )}
+      </div>
+
+      {/* Tab Bar */}
+      <div className="tab-bar">
+        {hospitals.map(h => (
+          <button
+            key={h.id}
+            className={`tab-item${activeTab === h.id ? ' active' : ''}`}
+            onClick={() => { setActiveTab(h.id); setSearchQ(''); }}
+          >
+            <div className="tab-icon" style={{background: h.color}}>{h.name}</div>
+            <span className="tab-label">{h.name}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Toast */}
+      {toast && <Toast msg={toast} />}
+
+      {/* Edit Hospital */}
+      {editHosp && (
+        <Modal title="Edit Hospital" onClose={() => setEditHosp(null)}>
+          <HospitalForm
+            initial={editHosp}
+            onSave={data => { editHospital(editHosp.id, data); setEditHosp(null); }}
+            onDelete={() => { delHospital(editHosp.id); setEditHosp(null); }}
+            onClose={() => setEditHosp(null)}
+          />
+        </Modal>
+      )}
+
+      {/* Add Hospital */}
+      {addHosp && (
+        <Modal title="Add Hospital" onClose={() => setAddHosp(false)}>
+          <HospitalForm
+            isNew
+            onSave={data => { addHospital(data); setAddHosp(false); }}
+            onClose={() => setAddHosp(false)}
+          />
+        </Modal>
+      )}
+    </div>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
