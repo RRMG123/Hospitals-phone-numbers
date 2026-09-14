@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Riverside Community Hospital — Room Directory</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: #f2f2f7;
+    color: #1c1c1e;
+  }
+  #root {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    position: sticky; top: 0; z-index: 10;
+    background: rgba(255,255,255,0.97);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid #e5e5ea;
+    padding: 14px 16px 10px;
+  }
+  h1 {
+    font-size: 16px; font-weight: 700;
+  }
+  .subtitle {
+    font-size: 12px; color: #6d6d72; margin-top: 2px;
+  }
+  .search-wrap { padding: 10px 16px; }
+  #search {
+    width: 100%;
+    font-size: 17px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid #d1d1d6;
+    background: #fff;
+    outline: none;
+  }
+  #search:focus { border-color: #007AFF; }
+  .hint { font-size: 12px; color: #8e8e93; padding: 0 16px 8px; }
+  main { flex: 1; padding: 4px 16px 24px; }
+  .card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .card.warn { border: 1px solid #FF9500; }
+  .card-left { min-width: 0; flex: 1; }
+  .section-name { font-size: 15px; font-weight: 700; }
+  .room-range { font-size: 12px; color: #6d6d72; margin-top: 2px; }
+  .note { font-size: 11px; color: #FF3B30; margin-top: 4px; font-weight: 600; }
+  .call-btn {
+    flex-shrink: 0;
+    display: flex; flex-direction: column; align-items: center;
+    background: #007AFF; color: #fff; text-decoration: none;
+    border-radius: 10px; padding: 8px 12px;
+    font-size: 13px; font-weight: 700;
+  }
+  .call-btn small { font-weight: 500; font-size: 11px; opacity: 0.9; }
+  .empty {
+    text-align: center; color: #8e8e93; padding: 40px 20px; font-size: 14px;
+  }
+  .verify-badge {
+    display: inline-block; background: #FF9500; color: #fff;
+    font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 6px;
+    margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.3px;
+  }
+</style>
+</head>
+<body>
+<div id="root">
+  <header>
+    <h1>Riverside Community Hospital</h1>
+    <div class="subtitle">Room Number Directory — search a room to find the unit extension</div>
+  </header>
+  <div class="search-wrap">
+    <input id="search" type="text" inputmode="numeric" placeholder="Enter a room number (e.g. 6210)…" autofocus />
+  </div>
+  <div class="hint" id="hint"></div>
+  <main id="results"></main>
+</div>
+
+<script>
+/*
+  Data source: "RCH Contact List 2" (QI project, Dr. Adon — Radiology R3).
+  Two rows both claim rooms 201-226 (D2 @ 951-788-3692 and D2 Med Surg @
+  951-788-3480) — flagged NEEDS VERIFICATION below rather than dropped,
+  pending confirmation from the source list.
+*/
+const DIRECTORY = [
+  { section: "G6",                        range: "6201-6235 AND G6(1-33)",                         number: "951-495-6000", ranges: [[6201,6235]] },
+  { section: "G5",                        range: "5201-5235",                                       number: "951-495-5000", ranges: [[5201,5235]] },
+  { section: "Vintage 6",                 range: "650-660, 670-677",                                number: "951-788-3226", ranges: [[650,660],[670,677]] },
+  { section: "South 5",                   range: "550-566",                                         number: "951-788-3283", ranges: [[550,566]] },
+  { section: "North 5",                   range: "570-586",                                         number: "951-788-3144", ranges: [[570,586]] },
+  { section: "South/East 3",              range: "350-366, 370-384",                                number: "951-788-3276", ranges: [[350,366],[370,384]] },
+  { section: "D3 Med Surg",               range: "301-326",                                         number: "951-788-3278", ranges: [[301,326]] },
+  { section: "D2",                        range: "201-226",                                         number: "951-788-3692", ranges: [[201,226]], needsVerification: true },
+  { section: "D2 Med Surg",               range: "201-226, 250-266",                                number: "951-788-3480", ranges: [[201,226],[250,266]], needsVerification: true },
+  { section: "ICU (Medical and Neuro)",   range: "4201-4235",                                       number: "951-495-4000", ranges: [[4201,4235]] },
+  { section: "G1",                        range: "1201-1224",                                       number: "951-495-5106", ranges: [[1201,1224]], note: "ED5 Ed80a–91a, ONLY A beds, volatile" },
+  { section: "IMC",                       range: "450-486",                                         number: "951-512-4011", ranges: [[450,486]] },
+  { section: "SICU",                      range: "401-439",                                         number: "951-512-5443", ranges: [[401,439]] },
+  { section: "ED",                        range: "Emergency Department",                            number: "951-788-3200", ranges: [], isDept: true },
+];
+
+const searchEl = document.getElementById('search');
+const resultsEl = document.getElementById('results');
+const hintEl = document.getElementById('hint');
+
+function matches(entry, query) {
+  if (!query) return true;
+  const q = query.trim().toLowerCase();
+  if (entry.section.toLowerCase().includes(q)) return true;
+  const num = parseInt(q, 10);
+  if (!isNaN(num)) {
+    return entry.ranges.some(([lo, hi]) => num >= lo && num <= hi);
+  }
+  return false;
+}
+
+function render() {
+  const query = searchEl.value;
+  const list = DIRECTORY.filter(e => matches(e, query));
+
+  hintEl.textContent = query
+    ? `${list.length} match${list.length === 1 ? '' : 'es'}`
+    : 'Showing all sections';
+
+  if (list.length === 0) {
+    resultsEl.innerHTML = '<div class="empty">No section found for that room number.</div>';
+    return;
+  }
+
+  resultsEl.innerHTML = list.map(e => `
+    <div class="card ${e.needsVerification ? 'warn' : ''}">
+      <div class="card-left">
+        ${e.needsVerification ? '<div class="verify-badge">Needs verification</div>' : ''}
+        <div class="section-name">${e.section}</div>
+        <div class="room-range">${e.isDept ? 'Department line' : 'Rooms ' + e.range}</div>
+        ${e.note ? `<div class="note">${e.note}</div>` : ''}
+      </div>
+      <a class="call-btn" href="tel:${e.number.replace(/\D/g, '')}">
+        📞
+        <small>${e.number}</small>
+      </a>
+    </div>
+  `).join('');
+}
+
+searchEl.addEventListener('input', render);
+render();
+</script>
+</body>
+</html>
